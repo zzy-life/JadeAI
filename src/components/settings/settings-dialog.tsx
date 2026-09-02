@@ -66,6 +66,7 @@ export function SettingsDialog() {
 
   const startTour = useTourStore((s) => s.startTour);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [resumeCollectionEnabled, setResumeCollectionEnabled] = useState(true);
   const isOpen = activeModal === 'settings';
 
   // Model combobox state
@@ -80,7 +81,17 @@ export function SettingsDialog() {
     if (isOpen && !_hydrated) {
       hydrate();
     }
+    if (isOpen && window.jade) {
+      void window.jade.getSettings().then((settings) => {
+        setResumeCollectionEnabled(settings.resumeCollectionEnabled !== false);
+      });
+    }
   }, [isOpen, _hydrated, hydrate]);
+
+  const handleResumeCollectionChange = (enabled: boolean) => {
+    setResumeCollectionEnabled(enabled);
+    void window.jade?.patchSettings({ resumeCollectionEnabled: enabled });
+  };
 
   // Fetch models when combobox opens or when apiKey/baseURL changes
   const fetchModels = useCallback(async () => {
@@ -382,6 +393,24 @@ export function SettingsDialog() {
                 <span>5.0s</span>
               </div>
             </div>
+            {typeof window !== 'undefined' && window.jade && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label>{t('editorTab.resumeCollection')}</Label>
+                    <p className="text-xs text-zinc-400">
+                      {t('editorTab.resumeCollectionDescription')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={resumeCollectionEnabled}
+                    onCheckedChange={handleResumeCollectionChange}
+                  />
+                </div>
+              </>
+            )}
+
             <Separator />
 
             {/* Restart Tour */}

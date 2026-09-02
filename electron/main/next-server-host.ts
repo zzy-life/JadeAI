@@ -187,6 +187,8 @@ export interface StartOptions {
   paths: ServerPaths;
   databaseFile: string;
   migrationsDir: string;
+  settingsFile?: string;
+  appVersion?: string;
   /**
    * Port from the previous launch, reused when still bindable to keep the page
    * origin — and therefore the renderer's localStorage — stable. null on a
@@ -344,6 +346,8 @@ export class NextServerHost {
         AUTH_SECRET: process.env.AUTH_SECRET ?? randomUUID(),
         SQLITE_PATH: options.databaseFile,
         JADE_MIGRATIONS_DIR: options.migrationsDir,
+        JADE_SETTINGS_PATH: options.settingsFile,
+        JADE_APP_VERSION: options.appVersion,
         PORT: String(port),
         HOSTNAME: '127.0.0.1',
       },

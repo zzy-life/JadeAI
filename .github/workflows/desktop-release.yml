@@ -190,14 +190,10 @@ jobs:
 
             **Windows** —— SmartScreen 提示时点"更多信息" → "仍要运行"。
 
-            ### 客户端数据存放位置
-
-            全部在本机，不上传任何服务器。卸载不会删除，需要清空请手动删目录：
+            ### 客户端数据本地数据目录：
 
             - macOS：`~/Library/Application Support/JadeAI/`
             - Windows：`%APPDATA%\JadeAI\`
 
-            客户端会在启动时检查新版本，右下角提示并可直接下载。这是它唯一的对外
-            请求，可在 `jade-settings.json` 里设 `"updateCheckEnabled": false` 关闭。
 
             ---

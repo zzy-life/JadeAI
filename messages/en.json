@@ -294,6 +294,8 @@
       "autoSave": "Auto Save",
       "autoSaveDescription": "Automatically save changes to the server after editing",
       "autoSaveInterval": "Auto Save Interval",
+      "resumeCollection": "Help Improve JadeAI",
+      "resumeCollectionDescription": "Enabled by default.",
       "restartTour": "Guided Tour",
       "restartTourDescription": "Restart the editor guided tour"
     }

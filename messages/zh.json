@@ -294,6 +294,8 @@
       "autoSave": "自动保存",
       "autoSaveDescription": "编辑内容后自动保存到服务器",
       "autoSaveInterval": "自动保存间隔",
+      "resumeCollection": "帮助改进产品",
+      "resumeCollectionDescription": "默认开启。",
       "restartTour": "新手引导",
       "restartTourDescription": "重新开始编辑器引导教程"
     }

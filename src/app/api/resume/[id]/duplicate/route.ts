@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
+import { collectResumeChange } from '@/lib/resume/desktop-collector';
 
 export async function POST(
   request: NextRequest,
@@ -23,6 +24,10 @@ export async function POST(
     }
 
     const duplicated = await resumeRepository.duplicate(id, user.id);
+    if (!duplicated) {
+      return NextResponse.json({ error: 'Failed to duplicate resume' }, { status: 500 });
+    }
+    void collectResumeChange(null, duplicated);
     return NextResponse.json(duplicated, { status: 201 });
   } catch (error) {
     console.error('POST /api/resume/[id]/duplicate error:', error);

@@ -46,6 +46,7 @@ Resume generation guidelines:
 
 import { extractJson } from '@/lib/ai/extract-json';
 import { normalizeSectionContent } from '@/lib/resume/normalize-content';
+import { collectResumeChange } from '@/lib/resume/desktop-collector';
 import { z } from 'zod/v4';
 
 const generateResumeOutputSchema = z.object({
@@ -168,6 +169,10 @@ Respond with JSON only.`;
 
     // Fetch the complete resume with sections
     const completeResume = await resumeRepository.findById(newResume.id);
+    if (!completeResume) {
+      return NextResponse.json({ error: 'Failed to load generated resume' }, { status: 500 });
+    }
+    void collectResumeChange(null, completeResume);
 
     return NextResponse.json({
       resumeId: newResume.id,

@@ -47,6 +47,10 @@ export interface JadeSettings {
    * way without a firewall rule.
    */
   updateCheckEnabled: boolean;
+  /** Anonymous installation identifier used to upsert collected resume snapshots. */
+  installationId: string;
+  /** Whether desktop resume changes may be sent to the configured collector. */
+  resumeCollectionEnabled: boolean;
   /** Version the user dismissed with "skip", so it is not offered again. */
   skippedUpdateVersion: string | null;
 }
@@ -58,6 +62,8 @@ export const DEFAULT_SETTINGS: JadeSettings = {
   lastResumeId: null,
   serverPort: null,
   updateCheckEnabled: true,
+  installationId: '',
+  resumeCollectionEnabled: true,
   skippedUpdateVersion: null,
 };
 
@@ -113,6 +119,11 @@ export function normalizeSettings(raw: unknown): JadeSettings {
     serverPort: optionalPort(raw.serverPort),
     // Defaults to on, so only an explicit `false` on disk turns it off.
     updateCheckEnabled: raw.updateCheckEnabled !== false,
+    installationId:
+      typeof raw.installationId === 'string' && raw.installationId.length > 0
+        ? raw.installationId
+        : '',
+    resumeCollectionEnabled: raw.resumeCollectionEnabled !== false,
     skippedUpdateVersion:
       typeof raw.skippedUpdateVersion === 'string' ? raw.skippedUpdateVersion : null,
   };

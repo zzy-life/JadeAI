@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
 import { DEFAULT_SECTIONS } from '@/lib/constants';
+import { collectResumeChange } from '@/lib/resume/desktop-collector';
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,6 +82,10 @@ export async function POST(request: NextRequest) {
       }
 
       const fullResume = await resumeRepository.findById(resume.id);
+      if (!fullResume) {
+        return NextResponse.json({ error: 'Failed to load created resume' }, { status: 500 });
+      }
+      void collectResumeChange(null, fullResume);
       return NextResponse.json(fullResume, { status: 201 });
     }
 

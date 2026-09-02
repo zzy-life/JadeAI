@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
+import { collectResumeChange, collectResumeDeletion } from '@/lib/resume/desktop-collector';
 
 export async function GET(
   request: NextRequest,
@@ -99,6 +100,10 @@ export async function PUT(
     }
 
     const updated = await resumeRepository.findById(id);
+    if (!updated) {
+      return NextResponse.json({ error: 'Failed to load updated resume' }, { status: 500 });
+    }
+    void collectResumeChange(resume, updated);
     return NextResponse.json(updated);
   } catch (error) {
     console.error('PUT /api/resume/[id] error:', error);
@@ -127,6 +132,7 @@ export async function DELETE(
     }
 
     await resumeRepository.delete(id);
+    void collectResumeDeletion(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('DELETE /api/resume/[id] error:', error);

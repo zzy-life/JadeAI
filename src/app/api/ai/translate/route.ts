@@ -5,6 +5,7 @@ import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { translateInputSchema } from '@/lib/ai/translate-schema';
 import { extractJson } from '@/lib/ai/extract-json';
+import { collectResumeChange } from '@/lib/resume/desktop-collector';
 import { z } from 'zod/v4';
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -247,6 +248,9 @@ export async function POST(request: NextRequest) {
           const updatedSections = sectionIds
             ? updatedResume?.sections.filter((s: any) => sectionIds.includes(s.id))
             : updatedResume?.sections;
+          if (updatedResume) {
+            void collectResumeChange(mode === 'copy' ? null : resume, updatedResume);
+          }
 
           send({
             type: 'done',

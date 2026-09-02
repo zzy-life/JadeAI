@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron';
 import {
@@ -137,6 +138,8 @@ async function bootServerInto(window: BrowserWindow): Promise<void> {
       },
       databaseFile: getDatabaseFile(),
       migrationsDir: resolveMigrationsDirectory(),
+      settingsFile: getSettingsFile(),
+      appVersion: app.getVersion(),
       preferredPort: settings.get().serverPort,
       onUnexpectedExit: (code, signal) => {
         if (generation !== bootGeneration) return;
@@ -174,7 +177,7 @@ async function bootServerInto(window: BrowserWindow): Promise<void> {
 }
 
 /** Where releases are published. The `ds-v*` filtering lives in update-check. */
-const RELEASE_REPOSITORY = 'LingyiChen-AI/JadeAI';
+const RELEASE_REPOSITORY = 'zzy-life/JadeAI';
 
 /**
  * Tell the user about a newer release, if there is one.
@@ -256,6 +259,10 @@ app.whenReady().then(async () => {
     }
   }
   settings = new SettingsStore(getSettingsFile());
+  if (!settings.get().installationId) {
+    settings.patch({ installationId: randomUUID() });
+    await settings.whenIdle();
+  }
   registerSettingsIpc(settings);
   updates = new UpdateCoordinator(settings, app.getPath('downloads'));
   registerUpdateIpc(updates, () => mainWindow);

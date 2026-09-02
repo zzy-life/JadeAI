@@ -4,6 +4,7 @@ import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { parseResumeFile, validateResumeFile, ResumeParseError } from '@/lib/ai/parse-resume';
 import type { ParsedResume } from '@/lib/ai/parse-schema';
+import { collectResumeChange } from '@/lib/resume/desktop-collector';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,6 +56,10 @@ export async function POST(request: NextRequest) {
     }
 
     const fullResume = await resumeRepository.findById(resume.id);
+    if (!fullResume) {
+      return NextResponse.json({ error: 'Failed to load parsed resume' }, { status: 500 });
+    }
+    void collectResumeChange(null, fullResume);
     return NextResponse.json(fullResume, { status: 201 });
   } catch (error) {
     if (error instanceof AIConfigError) {
