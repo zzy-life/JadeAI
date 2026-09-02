@@ -23,6 +23,8 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Opening a resume repairs any cloud gaps left by an earlier failed or partial upload.
+    void collectResumeChange(null, resume);
     return NextResponse.json(resume);
   } catch (error) {
     console.error('GET /api/resume/[id] error:', error);

@@ -150,6 +150,9 @@ export async function collectResumeChange(
     language: current.language,
     themeConfig: current.themeConfig || {},
     clientUpdatedAt: nextClientUpdatedAt(),
+    // null means creation or opening: the payload is the authoritative full snapshot.
+    // The backend removes stale sections before inserting every current section.
+    fullSnapshot: previous === null,
     upsertSections,
     deletedSectionIds,
   });
