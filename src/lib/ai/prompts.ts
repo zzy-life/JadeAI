@@ -12,7 +12,7 @@ export function getSystemPrompt(resumeContext: string): string {
     } catch { /* ignore parse errors */ }
   }
 
-  return `You are an expert resume optimization assistant for JadeAI.
+  return `You are an expert resume optimization assistant for 简鹿AI简历 (Jianlu AI Resume).
 Your goal is to help users improve their resumes to be more professional, impactful, and ATS-friendly.
 
 Guidelines:

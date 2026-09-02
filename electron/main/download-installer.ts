@@ -34,7 +34,7 @@ const PARTIAL_SUFFIX = '.part';
  *
  * Writes to a `.part` file and renames only once the bytes are all there. That
  * ordering matters more than usual for this particular payload: a truncated dmg
- * is exactly what macOS reports as "JadeAI 已损坏，无法打开", so a download
+ * is exactly what macOS reports as "简鹿 已损坏，无法打开", so a download
  * interrupted halfway must not be left sitting under the real name where
  * someone would open it and conclude the release is broken.
  *

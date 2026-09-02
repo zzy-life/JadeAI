@@ -6,10 +6,10 @@ describe('resolveAssetRoot', () => {
     expect(
       resolveAssetRoot({
         isPackaged: true,
-        resourcesPath: '/Applications/JadeAI.app/Contents/Resources',
+        resourcesPath: '/Applications/简鹿.app/Contents/Resources',
         appRoot: '/repo',
       }),
-    ).toBe('/Applications/JadeAI.app/Contents/Resources');
+    ).toBe('/Applications/简鹿.app/Contents/Resources');
   });
 
   it('uses the repo root when not packaged', () => {

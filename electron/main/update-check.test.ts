@@ -19,24 +19,24 @@ function asset(name: string, size: number): GitHubReleaseAsset {
 
 describe('selectInstallerAsset', () => {
   const assets = [
-    asset('JadeAI-1.0.0-mac-arm64.dmg', 1),
-    asset('JadeAI-1.0.0-mac-x64.dmg', 2),
-    asset('JadeAI-1.0.0-win-x64-setup.exe', 3),
+    asset('Jianlu-1.0.0-mac-arm64.dmg', 1),
+    asset('Jianlu-1.0.0-mac-x64.dmg', 2),
+    asset('Jianlu-1.0.0-win-x64-setup.exe', 3),
   ];
 
   // These suffixes mirror artifactName in the electron-builder config. If they
   // drift apart the app silently stops finding its own installers.
   it.each([
-    ['darwin', 'arm64', 'JadeAI-1.0.0-mac-arm64.dmg'],
-    ['darwin', 'x64', 'JadeAI-1.0.0-mac-x64.dmg'],
-    ['win32', 'x64', 'JadeAI-1.0.0-win-x64-setup.exe'],
+    ['darwin', 'arm64', 'Jianlu-1.0.0-mac-arm64.dmg'],
+    ['darwin', 'x64', 'Jianlu-1.0.0-mac-x64.dmg'],
+    ['win32', 'x64', 'Jianlu-1.0.0-win-x64-setup.exe'],
   ] as const)('picks the %s %s installer', (platform, arch, expected) => {
     expect(selectInstallerAsset(assets, platform, arch)?.name).toBe(expected);
   });
 
   // mac arm64 must not match the x64 dmg just because both end in .dmg.
   it('does not fall back to another arch', () => {
-    const onlyX64 = [asset('JadeAI-1.0.0-mac-x64.dmg', 2)];
+    const onlyX64 = [asset('Jianlu-1.0.0-mac-x64.dmg', 2)];
     expect(selectInstallerAsset(onlyX64, 'darwin', 'arm64')).toBeNull();
   });
 
@@ -103,15 +103,15 @@ describe('compareVersions', () => {
 describe('selectAvailableUpdate', () => {
   it('finds the newest release above the running version', () => {
     const withAsset = (tag: string, v: string) =>
-      release(tag, { assets: [asset(`JadeAI-${v}-mac-arm64.dmg`, 1)] });
+      release(tag, { assets: [asset(`Jianlu-${v}-mac-arm64.dmg`, 1)] });
     const releases = [withAsset('v0.0.1', '0.0.1'), withAsset('v0.2.0', '0.2.0'), withAsset('v0.1.0', '0.1.0')];
     expect(selectAvailableUpdate(releases, '0.0.1', null, 'darwin', 'arm64')).toEqual({
       version: '0.2.0',
       tag: 'v0.2.0',
       url: 'https://example.test/v0.2.0',
       asset: {
-        name: 'JadeAI-0.2.0-mac-arm64.dmg',
-        url: 'https://example.test/asset/JadeAI-0.2.0-mac-arm64.dmg',
+        name: 'Jianlu-0.2.0-mac-arm64.dmg',
+        url: 'https://example.test/asset/Jianlu-0.2.0-mac-arm64.dmg',
         size: 1,
       },
     });
@@ -121,22 +121,22 @@ describe('selectAvailableUpdate', () => {
     const releases = [
       release('ds-v0.2.0', {
         assets: [
-          asset('JadeAI-0.2.0-mac-arm64.dmg', 111),
-          asset('JadeAI-0.2.0-mac-x64.dmg', 222),
-          asset('JadeAI-0.2.0-win-x64-setup.exe', 333),
+          asset('Jianlu-0.2.0-mac-arm64.dmg', 111),
+          asset('Jianlu-0.2.0-mac-x64.dmg', 222),
+          asset('Jianlu-0.2.0-win-x64-setup.exe', 333),
         ],
       }),
     ];
     expect(selectAvailableUpdate(releases, '0.0.1', null, 'darwin', 'arm64')?.asset).toEqual({
-      name: 'JadeAI-0.2.0-mac-arm64.dmg',
-      url: 'https://example.test/asset/JadeAI-0.2.0-mac-arm64.dmg',
+      name: 'Jianlu-0.2.0-mac-arm64.dmg',
+      url: 'https://example.test/asset/Jianlu-0.2.0-mac-arm64.dmg',
       size: 111,
     });
     expect(selectAvailableUpdate(releases, '0.0.1', null, 'win32', 'x64')?.asset?.size).toBe(333);
   });
 
   it('returns null when the running version is already the newest', () => {
-    const releases = [release('v0.0.1', { assets: [asset('JadeAI-0.0.1-mac-arm64.dmg', 1)] })];
+    const releases = [release('v0.0.1', { assets: [asset('Jianlu-0.0.1-mac-arm64.dmg', 1)] })];
     expect(selectAvailableUpdate(releases, '0.0.1', null, 'darwin', 'arm64')).toBeNull();
     expect(selectAvailableUpdate(releases, '0.1.0', null, 'darwin', 'arm64')).toBeNull();
   });
@@ -154,7 +154,7 @@ describe('selectAvailableUpdate', () => {
   // for none.
   it('ignores a release missing an installer for this arch', () => {
     const releases = [
-      release('v0.5.0', { assets: [asset('JadeAI-0.5.0-win-x64-setup.exe', 1)] }),
+      release('v0.5.0', { assets: [asset('Jianlu-0.5.0-win-x64-setup.exe', 1)] }),
     ];
     expect(selectAvailableUpdate(releases, '0.0.4', null, 'darwin', 'arm64')).toBeNull();
   });
@@ -163,14 +163,14 @@ describe('selectAvailableUpdate', () => {
   // new v* release both present, both with installers.
   it('prefers the newer version across both tag schemes', () => {
     const releases = [
-      release('ds-v0.0.4', { assets: [asset('JadeAI-0.0.4-mac-arm64.dmg', 1)] }),
-      release('v0.5.0', { assets: [asset('JadeAI-0.5.0-mac-arm64.dmg', 2)] }),
+      release('ds-v0.0.4', { assets: [asset('Jianlu-0.0.4-mac-arm64.dmg', 1)] }),
+      release('v0.5.0', { assets: [asset('Jianlu-0.5.0-mac-arm64.dmg', 2)] }),
     ];
     expect(selectAvailableUpdate(releases, '0.0.2', null, 'darwin', 'arm64')?.version).toBe('0.5.0');
   });
 
   it('ignores drafts and prereleases', () => {
-    const dmg = [asset('JadeAI-9.0.0-mac-arm64.dmg', 1)];
+    const dmg = [asset('Jianlu-9.0.0-mac-arm64.dmg', 1)];
     const releases = [
       release('v9.0.0', { draft: true, assets: dmg }),
       release('v8.0.0', { prerelease: true, assets: dmg }),
@@ -179,15 +179,15 @@ describe('selectAvailableUpdate', () => {
   });
 
   it('stays quiet about a version the user chose to skip', () => {
-    const releases = [release('v0.2.0', { assets: [asset('JadeAI-0.2.0-mac-arm64.dmg', 1)] })];
+    const releases = [release('v0.2.0', { assets: [asset('Jianlu-0.2.0-mac-arm64.dmg', 1)] })];
     expect(selectAvailableUpdate(releases, '0.0.1', '0.2.0', 'darwin', 'arm64')).toBeNull();
   });
 
   // Skipping one version must not mute every later one.
   it('still reports a version newer than the skipped one', () => {
     const releases = [
-      release('v0.2.0', { assets: [asset('JadeAI-0.2.0-mac-arm64.dmg', 1)] }),
-      release('v0.3.0', { assets: [asset('JadeAI-0.3.0-mac-arm64.dmg', 1)] }),
+      release('v0.2.0', { assets: [asset('Jianlu-0.2.0-mac-arm64.dmg', 1)] }),
+      release('v0.3.0', { assets: [asset('Jianlu-0.3.0-mac-arm64.dmg', 1)] }),
     ];
     expect(selectAvailableUpdate(releases, '0.0.1', '0.2.0', 'darwin', 'arm64')?.version).toBe(
       '0.3.0',

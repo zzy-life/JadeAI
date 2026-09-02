@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "JadeAI",
+    "appName": "Jianlu AI Resume",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -294,7 +294,7 @@
       "autoSave": "Auto Save",
       "autoSaveDescription": "Automatically save changes to the server after editing",
       "autoSaveInterval": "Auto Save Interval",
-      "resumeCollection": "Help Improve JadeAI",
+      "resumeCollection": "Help Improve Jianlu AI Resume",
       "resumeCollectionDescription": "Enabled by default.",
       "restartTour": "Guided Tour",
       "restartTourDescription": "Restart the editor guided tour"
@@ -507,7 +507,7 @@
     "description": "Import a previously exported JSON file to replace current content",
     "dashboardDescription": "Import a previously exported JSON file to create a new resume",
     "selectFile": "Click to select or drag a .json file here",
-    "dragHint": "Supports .json files exported from JadeAI",
+    "dragHint": "Supports .json files exported from Jianlu",
     "importing": "Importing...",
     "success": "Import successful!",
     "error": "Import failed. Please try again.",
@@ -705,7 +705,7 @@
     },
     "cta": {
       "title": "Ready to Build Your Best Resume?",
-      "subtitle": "Join thousands of job seekers who have landed interviews with JadeAI. No sign-up required.",
+      "subtitle": "Join thousands of job seekers who have landed interviews with Jianlu. No sign-up required.",
       "button": "Create Your Resume Now"
     },
     "footer": {
@@ -729,7 +729,7 @@
         "terms": "Terms of Service",
         "cookies": "Cookie Policy"
       },
-      "copyright": "© {year} JadeAI. All rights reserved."
+      "copyright": "© {year} Changsha Wanghu Technology Co., Ltd. All rights reserved."
     }
   },
   "linkedinPhoto": {
@@ -786,7 +786,7 @@
     "submit": "View Resume",
     "invalidPassword": "Invalid password. Please try again.",
     "notFound": "This resume is not available or has been removed.",
-    "viewOnJadeAI": "View on JadeAI"
+    "viewOnJadeAI": "View on Jianlu"
   },
   "interview": {
     "nav": "Mock Interview",

@@ -16,7 +16,7 @@ import { fetchDesktopReleases, selectAvailableUpdate } from './update-check';
 
 // Must run before any path is resolved: app.setName() changes how
 // app.getPath('userData') resolves, and data-path.ts captures that value once.
-app.setName('JadeAI');
+app.setName('简鹿');
 
 const isDevelopment = !app.isPackaged;
 const serverMode: ServerMode = isDevelopment ? 'development' : 'production';
@@ -42,7 +42,7 @@ function createWindow(): BrowserWindow {
     minWidth: 940,
     minHeight: 600,
     show: false,
-    title: 'JadeAI',
+    title: '简鹿',
     // Window/taskbar icon. On macOS the dock icon comes from the bundle instead,
     // which in development is Electron's own — app.dock.setIcon() below fixes that.
     icon: resolveResourceFile('build', 'icon.png'),

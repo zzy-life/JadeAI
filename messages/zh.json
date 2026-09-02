@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "JadeAI",
+    "appName": "简鹿AI简历",
     "save": "保存",
     "cancel": "取消",
     "delete": "删除",
@@ -507,7 +507,7 @@
     "description": "导入之前导出的 JSON 文件，替换当前简历内容",
     "dashboardDescription": "导入之前导出的 JSON 文件，创建新简历",
     "selectFile": "点击选择或拖拽 .json 文件到此处",
-    "dragHint": "支持从 JadeAI 导出的 .json 文件",
+    "dragHint": "支持从 简鹿 导出的 .json 文件",
     "importing": "导入中...",
     "success": "导入成功！",
     "error": "导入失败，请重试。",
@@ -705,7 +705,7 @@
     },
     "cta": {
       "title": "准备好打造你的最佳简历了吗？",
-      "subtitle": "已有数千名求职者通过 JadeAI 收获面试机会。无需注册，即刻开始。",
+      "subtitle": "已有数千名求职者通过 简鹿 收获面试机会。无需注册，即刻开始。",
       "button": "立即创建简历"
     },
     "footer": {
@@ -729,7 +729,7 @@
         "terms": "服务条款",
         "cookies": "Cookie 政策"
       },
-      "copyright": "© {year} JadeAI. 保留所有权利。"
+      "copyright": "© {year} 长沙网弧科技有限公司. 保留所有权利。"
     }
   },
   "linkedinPhoto": {
@@ -786,7 +786,7 @@
     "submit": "查看简历",
     "invalidPassword": "密码错误，请重试。",
     "notFound": "此简历不存在或已被删除。",
-    "viewOnJadeAI": "前往 JadeAI"
+    "viewOnJadeAI": "前往 简鹿"
   },
   "interview": {
     "nav": "面试模拟",

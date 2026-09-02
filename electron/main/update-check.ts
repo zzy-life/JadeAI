@@ -61,7 +61,7 @@ export interface AvailableUpdate {
  * Suffix identifying the installer built for a given platform and arch.
  *
  * Mirrors the artifactName patterns in config/electron-builder.config.cjs
- * (`JadeAI-${version}-mac-${arch}.dmg`, `JadeAI-${version}-win-${arch}-setup.exe`).
+ * (`Jianlu-${version}-mac-${arch}.dmg`, `Jianlu-${version}-win-${arch}-setup.exe`).
  * Renaming one without the other means this returns null and the app falls back
  * to opening the release page — degraded, not broken.
  */
@@ -200,7 +200,7 @@ export async function fetchDesktopReleases(deps: UpdateCheckDeps): Promise<GitHu
         headers: {
           Accept: 'application/vnd.github+json',
           // GitHub rejects requests without one.
-          'User-Agent': 'JadeAI-Desktop',
+          'User-Agent': 'Jianlu-Desktop',
         },
       },
     );

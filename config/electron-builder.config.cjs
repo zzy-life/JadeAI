@@ -1,4 +1,4 @@
-// electron-builder configuration for the JadeAI desktop client.
+// electron-builder configuration for the Jianlu desktop client.
 //
 // Layout contract with the main process (electron/main/app-paths.ts):
 //   resolveResourceFile(...s)      -> join(process.resourcesPath, ...s)
@@ -129,7 +129,7 @@ function verifyPackagedLayout(resourcesDir, electronPlatformName, arch) {
  * It runs anyway when launched straight out of a build directory, because
  * Gatekeeper only assesses a bundle carrying `com.apple.quarantine` — which is
  * exactly what a browser download attaches. So the failure appears only after
- * downloading a release: macOS reports "JadeAI 已损坏，无法打开" and offers
+ * downloading a release: macOS reports "简鹿 已损坏，无法打开" and offers
  * nothing but Move to Trash. An unsigned build is not merely unverified, it is
  * unopenable.
  *
@@ -168,8 +168,8 @@ module.exports = {
     }
   },
 
-  appId: 'com.jadeai.desktop',
-  productName: 'JadeAI',
+  appId: 'com.webarcx.jianlu',
+  productName: '简鹿',
   directories: {
     buildResources: 'resources/build',
     output: 'release',
@@ -192,7 +192,7 @@ module.exports = {
     '!test{,/**/*}',
     '!images{,/**/*}',
     '!data{,/**/*}',
-    '!jadeai-data{,/**/*}',
+    '!jianlu-data{,/**/*}',
     '!.next{,/**/*}',
     '!release{,/**/*}',
     '!{README.md,README.zh-CN.md,ARCHITECTURE.md,FEATURE-IDEAS.md,Dockerfile,docker_run_local.sh}',
@@ -245,7 +245,7 @@ module.exports = {
   },
 
   dmg: {
-    artifactName: 'JadeAI-${version}-mac-${arch}.${ext}',
+    artifactName: 'Jianlu-${version}-mac-${arch}.${ext}',
   },
 
   win: {
@@ -262,7 +262,7 @@ module.exports = {
     oneClick: false,
     perMachine: false,
     allowToChangeInstallationDirectory: true,
-    shortcutName: 'JadeAI',
-    artifactName: 'JadeAI-${version}-win-${arch}-setup.${ext}',
+    shortcutName: '简鹿',
+    artifactName: 'Jianlu-${version}-win-${arch}-setup.${ext}',
   },
 };

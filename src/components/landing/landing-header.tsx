@@ -63,7 +63,7 @@ export function LandingHeader() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="JadeAI" width={120} height={36} priority />
+            <Image src="/logo.svg" alt="简鹿" width={164} height={36} priority />
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {[
@@ -127,7 +127,7 @@ export function LandingHeader() {
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <div className="flex h-full flex-col">
                 <div className="flex h-14 items-center border-b border-zinc-100 px-5 dark:border-zinc-900">
-                  <Image src="/logo.svg" alt="JadeAI" width={104} height={32} />
+                  <Image src="/logo.svg" alt="简鹿" width={145} height={32} />
                 </div>
                 <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
                   {[

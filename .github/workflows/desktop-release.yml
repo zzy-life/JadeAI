@@ -109,7 +109,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
-          name: jadeai-${{ matrix.artifact }}
+          name: jianlu-${{ matrix.artifact }}
           path: |
             release/*.dmg
             release/*.exe
@@ -153,7 +153,7 @@ jobs:
           files: artifacts/*
           generate_release_notes: true
           body: |
-            ## JadeAI ${{ github.ref_name }}
+            ## 简鹿 ${{ github.ref_name }}
 
             ### Web 版
 
@@ -167,9 +167,9 @@ jobs:
 
             | 平台 | 文件 |
             |---|---|
-            | macOS (Apple Silicon) | `JadeAI-*-mac-arm64.dmg` |
-            | macOS (Intel) | `JadeAI-*-mac-x64.dmg` |
-            | Windows (x64) | `JadeAI-*-win-x64-setup.exe` |
+            | macOS (Apple Silicon) | `Jianlu-*-mac-arm64.dmg` |
+            | macOS (Intel) | `Jianlu-*-mac-x64.dmg` |
+            | Windows (x64) | `Jianlu-*-win-x64-setup.exe` |
 
             ### 首次打开
 
@@ -179,7 +179,7 @@ jobs:
             **macOS** —— 终端执行这一条，然后正常双击：
 
             ```
-            xattr -dr com.apple.quarantine /Applications/JadeAI.app
+            xattr -dr com.apple.quarantine /Applications/简鹿.app
             ```
 
             也可以走图形界面：双击被拦后打开 系统设置 → 隐私与安全性，
@@ -192,8 +192,8 @@ jobs:
 
             ### 客户端数据本地数据目录：
 
-            - macOS：`~/Library/Application Support/JadeAI/`
-            - Windows：`%APPDATA%\JadeAI\`
+            - macOS：`~/Library/Application Support/简鹿/`
+            - Windows：`%APPDATA%\简鹿\`
 
 
             ---

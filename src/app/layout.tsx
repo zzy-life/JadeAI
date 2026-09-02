@@ -4,7 +4,7 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-const appName = process.env.APP_NAME || 'JadeAI';
+const appName = process.env.APP_NAME || '简鹿AI简历';
 
 export const metadata: Metadata = {
   title: `${appName} - AI Resume Builder`,

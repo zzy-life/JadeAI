@@ -438,7 +438,7 @@ describe('NextServerHost stale exit handling across retries', () => {
 });
 
 describe('resolveNodeExecutable', () => {
-  const ELECTRON = '/Apps/JadeAI.app/Contents/MacOS/JadeAI';
+  const ELECTRON = '/Apps/简鹿.app/Contents/MacOS/简鹿';
   const REAL_NODE = '/Users/me/.nvm/versions/node/v24.12.0/bin/node';
 
   // `next dev` forks next-server as a grandchild WITHOUT propagating

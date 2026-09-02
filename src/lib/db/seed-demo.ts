@@ -148,7 +148,7 @@ export async function seedDemoUser(db: any) {
         items: [
           {
             id: crypto.randomUUID(),
-            name: 'JadeAI 简历助手',
+            name: '简鹿简历助手',
             url: 'https://github.com/example/jadeai',
             startDate: '2024-10',
             endDate: '2025-02',

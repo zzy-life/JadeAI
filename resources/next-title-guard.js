@@ -4,12 +4,12 @@
 // libuv implements that assignment by calling LaunchServices — and when the
 // running executable lives inside an .app bundle, that call REGISTERS the process
 // as a foreground application. The packaged app runs this child with Electron's
-// own binary (ELECTRON_RUN_AS_NODE), which is inside JadeAI.app, so the child
+// own binary (ELECTRON_RUN_AS_NODE), which is inside 简鹿.app, so the child
 // earned its own dock icon: a generic "exec" tile beside the real one.
 //
 // Verified directly against the packaged binary: a script that only sleeps gets
 // no LaunchServices entry; adding a single `process.title = ...` produces one
-// with `bundle path=/Applications/JadeAI.app`. ELECTRON_RUN_AS_NODE does not
+// with `bundle path=/Applications/简鹿.app`. ELECTRON_RUN_AS_NODE does not
 // prevent it — it suppresses Chromium startup, not libuv's title call.
 //
 // So shadow the property. Reads still return whatever was last assigned, which

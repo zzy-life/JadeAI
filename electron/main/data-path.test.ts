@@ -6,8 +6,8 @@ import { resolveUserDataDir } from './data-path';
 // yields backslashes. A hardcoded POSIX literal would fail there, and this app
 // packages for win/linux/mac.
 const SUPPORT_DIR = join('/Users/me/Library/Application Support');
-const PROD_DIR = join(SUPPORT_DIR, 'JadeAI');
-const DEV_DIR = join(SUPPORT_DIR, 'JadeAI-dev');
+const PROD_DIR = join(SUPPORT_DIR, '简鹿');
+const DEV_DIR = join(SUPPORT_DIR, '简鹿-dev');
 
 describe('resolveUserDataDir', () => {
   it('returns the platform directory unchanged in production', () => {

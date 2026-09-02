@@ -34,8 +34,8 @@ function respondWith(payload: string, init: { ok?: boolean; status?: number; len
 }
 
 const request = (overrides = {}) => ({
-  url: 'https://example.test/JadeAI-1.0.0-mac-arm64.dmg',
-  fileName: 'JadeAI-1.0.0-mac-arm64.dmg',
+  url: 'https://example.test/Jianlu-1.0.0-mac-arm64.dmg',
+  fileName: 'Jianlu-1.0.0-mac-arm64.dmg',
   expectedSize: 10,
   directory: dir,
   ...overrides,
@@ -47,7 +47,7 @@ describe('downloadFile', () => {
       fetch: respondWith('0123456789') as never,
       onProgress: vi.fn(),
     });
-    expect(path).toBe(join(dir, 'JadeAI-1.0.0-mac-arm64.dmg'));
+    expect(path).toBe(join(dir, 'Jianlu-1.0.0-mac-arm64.dmg'));
     expect(readFileSync(path, 'utf-8')).toBe('0123456789');
   });
 
@@ -60,7 +60,7 @@ describe('downloadFile', () => {
     expect(Math.max(...fractions)).toBeCloseTo(1, 5);
   });
 
-  // The symptom of a truncated dmg is "JadeAI 已损坏，无法打开" — the exact
+  // The symptom of a truncated dmg is "Jianlu 已损坏，无法打开" — the exact
   // message a broken signature produces. Leaving a short file under the real
   // name would send someone chasing the wrong bug.
   it('rejects and leaves nothing behind when fewer bytes arrive than promised', async () => {
@@ -90,7 +90,7 @@ describe('downloadFile', () => {
     await expect(
       downloadFile(request(), { fetch: fetchImpl as never, onProgress: vi.fn() }),
     ).rejects.toThrow();
-    expect(existsSync(join(dir, 'JadeAI-1.0.0-mac-arm64.dmg'))).toBe(false);
+    expect(existsSync(join(dir, 'Jianlu-1.0.0-mac-arm64.dmg'))).toBe(false);
     expect(readdirSync(dir)).toHaveLength(0);
   });
 
@@ -107,13 +107,13 @@ describe('downloadFile', () => {
   // A .part left by a previous crashed attempt must not be appended to or
   // mistaken for progress.
   it('discards a leftover partial file from an earlier attempt', async () => {
-    writeFileSync(join(dir, 'JadeAI-1.0.0-mac-arm64.dmg.part'), 'stale garbage');
+    writeFileSync(join(dir, 'Jianlu-1.0.0-mac-arm64.dmg.part'), 'stale garbage');
     const path = await downloadFile(request(), {
       fetch: respondWith('0123456789') as never,
       onProgress: vi.fn(),
     });
     expect(readFileSync(path, 'utf-8')).toBe('0123456789');
-    expect(readdirSync(dir)).toEqual(['JadeAI-1.0.0-mac-arm64.dmg']);
+    expect(readdirSync(dir)).toEqual(['Jianlu-1.0.0-mac-arm64.dmg']);
   });
 
   // GitHub's CDN does not always send content-length; the API size is the

@@ -1,7 +1,7 @@
 // CI only: make package.json's version match the tag being released.
 //
 // electron-builder puts package.json's version into every installer filename, so
-// without this a release tagged ds-v0.0.1 ships files called JadeAI-0.1.0-*.dmg
+// without this a release tagged ds-v0.0.1 ships files called Jianlu-0.1.0-*.dmg
 // and nobody can tell which build a file came from. The tag is the single source
 // of truth; the working tree's version is only a placeholder between releases.
 //
