@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, shell } from 'electron';
 import {
   getAppRoot,
   getAssetRoot,
@@ -246,6 +246,9 @@ app.on('second-instance', () => {
 app.whenReady().then(async () => {
   // whenReady still resolves in the losing instance; quitting is asynchronous.
   if (!hasSingleInstanceLock) return;
+
+  // Remove Electron's default File/Edit/View/Window menus on every platform.
+  Menu.setApplicationMenu(null);
 
   initDataPath(isDevelopment);
 
