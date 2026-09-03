@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ChevronsUpDown, Check, Loader2, ExternalLink, KeyRound } from 'lucide-react';
+import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ChevronsUpDown, Check, Loader2, ExternalLink, KeyRound, Gift, MessageCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -89,6 +90,7 @@ export function SettingsDialog() {
 
   const startTour = useTourStore((s) => s.startTour);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [freeTrialOpen, setFreeTrialOpen] = useState(false);
   const [resumeCollectionEnabled, setResumeCollectionEnabled] = useState(true);
   const isOpen = activeModal === 'settings';
 
@@ -190,7 +192,8 @@ export function SettingsDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
       <DialogContent className="sm:max-w-[540px] p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
@@ -389,6 +392,15 @@ export function SettingsDialog() {
                   </a>
                 ))}
               </div>
+
+              <button
+                type="button"
+                onClick={() => setFreeTrialOpen(true)}
+                className="group flex w-full cursor-pointer items-center justify-center gap-2 border-t border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-950"
+              >
+                <Gift className="h-4 w-4 transition-transform group-hover:-rotate-6" />
+                {t('ai.freeTrialButton')}
+              </button>
             </section>
           </TabsContent>
 
@@ -518,6 +530,42 @@ export function SettingsDialog() {
           </TabsContent>
         </Tabs>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <Dialog open={freeTrialOpen} onOpenChange={setFreeTrialOpen}>
+        <DialogContent className="sm:max-w-[400px] overflow-hidden p-0 gap-0">
+          <div className="bg-gradient-to-b from-emerald-50 to-white px-6 pb-6 pt-7 dark:from-emerald-950/50 dark:to-zinc-950">
+            <DialogHeader className="items-center text-center sm:text-center">
+              <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                <MessageCircle className="h-5 w-5" />
+              </div>
+              <DialogTitle className="text-xl">{t('ai.freeTrialTitle')}</DialogTitle>
+              <DialogDescription className="max-w-xs leading-5">
+                {t('ai.freeTrialDescription')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mx-auto mt-5 w-fit rounded-2xl border border-emerald-100 bg-white p-2.5 shadow-[0_12px_35px_-15px_rgba(5,150,105,0.35)] dark:border-emerald-900 dark:bg-white">
+              <img
+                src="https://demo-html-zip.oss-cn-hangzhou.aliyuncs.com/SourceDocx/img/webarcx_wechat_mini.jpg"
+                alt={t('ai.wechatQrAlt')}
+                width={200}
+                height={200}
+                className="h-[200px] w-[200px] rounded-lg object-cover"
+              />
+            </div>
+
+            <div className="mt-5 rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-center dark:border-emerald-900 dark:bg-zinc-900/80">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {t('ai.freeTrialInstruction')}
+              </p>
+              <p className="mt-1 font-mono text-base font-semibold tracking-wide text-emerald-700 dark:text-emerald-300">
+                {t('ai.freeTrialKeyword')}
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

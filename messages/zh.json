@@ -281,7 +281,13 @@
       "modelPlaceholder": "输入模型名称...",
       "noModelsFound": "未找到模型，请在下方手动输入模型名称。",
       "getApiKeyTitle": "还没有 API Key？",
-      "getApiKeyDescription": "前往模型服务商官方平台，注册并创建你的 API Key。"
+      "getApiKeyDescription": "前往模型服务商官方平台，注册并创建你的 API Key。",
+      "freeTrialButton": "获取免费试用 Key",
+      "freeTrialTitle": "关注公众号，领取试用 Key",
+      "freeTrialDescription": "使用微信扫描二维码关注公众号，即可领取免费试用 Key",
+      "freeTrialInstruction": "关注后发送关键词",
+      "freeTrialKeyword": "简鹿apikey",
+      "wechatQrAlt": "简鹿微信公众号二维码"
     },
     "appearance": {
       "title": "外观",

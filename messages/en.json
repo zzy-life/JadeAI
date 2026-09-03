@@ -281,7 +281,13 @@
       "modelPlaceholder": "Enter model name...",
       "noModelsFound": "No models found. Enter a model name manually below.",
       "getApiKeyTitle": "Need an API Key?",
-      "getApiKeyDescription": "Register with an official model provider and create your API Key."
+      "getApiKeyDescription": "Register with an official model provider and create your API Key.",
+      "freeTrialButton": "Get a free trial Key",
+      "freeTrialTitle": "Follow us for a trial Key",
+      "freeTrialDescription": "Scan the QR code with WeChat and follow the official account to receive a free trial Key.",
+      "freeTrialInstruction": "Send this keyword after following",
+      "freeTrialKeyword": "简鹿apikey",
+      "wechatQrAlt": "Jianlu WeChat official account QR code"
     },
     "appearance": {
       "title": "Appearance",
