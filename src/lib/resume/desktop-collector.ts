@@ -23,15 +23,6 @@ interface ResumeSnapshot {
   sections: ResumeSectionSnapshot[];
 }
 
-interface CollectorSection {
-  id: string;
-  type: string;
-  title: string;
-  sortOrder: number;
-  visible: boolean;
-  content: Record<string, unknown>;
-}
-
 const DEFAULT_COLLECTOR_URL = 'https://api.webarcx.com';
 const REQUEST_TIMEOUT_MS = 5_000;
 let sendChain: Promise<void> = Promise.resolve();
@@ -68,17 +59,23 @@ async function readCollectorSettings(): Promise<{
   }
 }
 
-function asCollectorSection(section: ResumeSectionSnapshot): CollectorSection {
+function normalizeThemeConfig(value: unknown): Record<string, unknown> {
+  let normalized = value;
+  if (typeof value === 'string') {
+    try {
+      normalized = JSON.parse(value) as unknown;
+    } catch {
+      // 保留无法解析的历史值，由服务端统一归档原始类型。
+    }
+  }
+  if (typeof normalized === 'object' && normalized !== null && !Array.isArray(normalized)) {
+    return normalized as Record<string, unknown>;
+  }
   return {
-    id: section.id,
-    type: section.type,
-    title: section.title,
-    sortOrder: section.sortOrder,
-    visible: section.visible,
-    content:
-      typeof section.content === 'object' && section.content !== null
-        ? (section.content as Record<string, unknown>)
-        : {},
+    __collectorPreservedValue__: {
+      kind: normalized === null ? 'null' : Array.isArray(normalized) ? 'array' : typeof normalized,
+      value: normalized,
+    },
   };
 }
 
@@ -114,7 +111,11 @@ async function sendRequest(path: string, payload: Record<string, unknown>): Prom
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
-      console.warn(`[resume-collector] request failed with status ${response.status}`);
+      console.warn(
+        `[resume-collector] request failed status=${response.status} ` +
+          `fullSnapshot=${String(payload.fullSnapshot)} ` +
+          `sections=${Array.isArray(payload.upsertSections) ? payload.upsertSections.length : 'invalid'}`,
+      );
     }
   } catch (error) {
     // Collection is best-effort and must never turn a local save into a failure.
@@ -135,9 +136,9 @@ export async function collectResumeChange(
 ): Promise<void> {
   const previousSections = new Map((previous?.sections || []).map((section) => [section.id, section]));
   const currentIds = new Set(current.sections.map((section) => section.id));
-  const upsertSections = current.sections
-    .filter((section) => sectionChanged(previousSections.get(section.id), section))
-    .map(asCollectorSection);
+  const upsertSections = current.sections.filter((section) =>
+    sectionChanged(previousSections.get(section.id), section),
+  );
   const deletedSectionIds = (previous?.sections || [])
     .filter((section) => !currentIds.has(section.id))
     .map((section) => section.id);
@@ -148,10 +149,9 @@ export async function collectResumeChange(
     title: current.title,
     template: current.template,
     language: current.language,
-    themeConfig: current.themeConfig || {},
+    themeConfig: normalizeThemeConfig(current.themeConfig),
     clientUpdatedAt: nextClientUpdatedAt(),
-    // null means creation or opening: the payload is the authoritative full snapshot.
-    // The backend removes stale sections before inserting every current section.
+    // 没有可信前序快照时，本次数据作为权威全量快照。
     fullSnapshot: previous === null,
     upsertSections,
     deletedSectionIds,
@@ -159,5 +159,8 @@ export async function collectResumeChange(
 }
 
 export async function collectResumeDeletion(resumeId: string): Promise<void> {
-  await send('/api/desktop/resumes/delete', { resumeId });
+  await send('/api/desktop/resumes/delete', {
+    resumeId,
+    clientUpdatedAt: nextClientUpdatedAt(),
+  });
 }
