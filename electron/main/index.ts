@@ -176,8 +176,9 @@ async function bootServerInto(window: BrowserWindow): Promise<void> {
   }
 }
 
-/** Where releases are published. The `ds-v*` filtering lives in update-check. */
+/** GitHub remains the version source; users are sent to the public download page. */
 const RELEASE_REPOSITORY = 'zzy-life/JadeAI';
+const UPDATE_PAGE_URL = 'https://pan.quark.cn/s/120bace5e4c4';
 
 /**
  * Tell the user about a newer release, if there is one.
@@ -267,8 +268,8 @@ app.whenReady().then(async () => {
     await settings.whenIdle();
   }
   registerSettingsIpc(settings);
-  updates = new UpdateCoordinator(settings, app.getPath('downloads'));
-  registerUpdateIpc(updates, () => mainWindow);
+  updates = new UpdateCoordinator(settings, UPDATE_PAGE_URL);
+  registerUpdateIpc(updates);
 
   ipcMain.on('jade:startup:retry', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;

@@ -1,7 +1,6 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Link } from '@/i18n/routing';
-import { Github } from 'lucide-react';
 
 export function LandingFooter() {
   const t = useTranslations('landing.footer');
@@ -42,16 +41,6 @@ export function LandingFooter() {
               <p className="mt-4 max-w-xs text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                 AI-powered resume builder
               </p>
-              <div className="mt-6 flex items-center gap-4">
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-                >
-                  <Github className="h-5 w-5" />
-                </a>
-              </div>
               <a
                 href="https://launchai.tools"
                 target="_blank"

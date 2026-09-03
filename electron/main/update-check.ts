@@ -1,8 +1,8 @@
 /**
  * Update checking against this repo's GitHub releases.
  *
- * The app checks, and downloads the right installer, but does not apply it.
- * Downloading needs nothing special; *installing* silently is what is blocked,
+ * The app checks for a release containing the right installer, then directs the
+ * user to the configured download page. Silent installation is not used,
  * for three reasons — and shipping that half-working would be worse than not
  * shipping it:
  *
@@ -18,11 +18,9 @@
  *  3. No update metadata. electron-builder only emits latest-mac.yml/latest.yml
  *     when a publish provider is configured, and CI runs with --publish never.
  *
- * So this reads the releases list, finds the newest version above the running
- * one that ships an installer for this machine, and offers exactly that file —
- * rather than a page with three to choose between — for the user to run. Moving
- * to real auto-update later means fixing (1); this module's selection logic
- * stays useful either way.
+ * So this reads the releases list and finds the newest version above the running
+ * one that ships an installer for this machine. The UI then sends the user to
+ * the configured public download page instead of exposing the release page.
  */
 
 export interface GitHubReleaseAsset {
@@ -62,8 +60,8 @@ export interface AvailableUpdate {
  *
  * Mirrors the artifactName patterns in config/electron-builder.config.cjs
  * (`Jianlu-${version}-mac-${arch}.dmg`, `Jianlu-${version}-win-${arch}-setup.exe`).
- * Renaming one without the other means this returns null and the app falls back
- * to opening the release page — degraded, not broken.
+ * Renaming one without the other means this returns null and no update notice is
+ * shown for that release.
  */
 export function installerSuffix(platform: NodeJS.Platform, arch: string): string | null {
   if (platform === 'darwin') return `-mac-${arch}.dmg`;
