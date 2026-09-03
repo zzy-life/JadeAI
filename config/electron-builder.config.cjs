@@ -262,6 +262,7 @@ module.exports = {
     oneClick: false,
     perMachine: false,
     allowToChangeInstallationDirectory: true,
+    include: 'resources/installer.nsh',
     shortcutName: '简鹿',
     artifactName: 'Jianlu-${version}-win-${arch}-setup.${ext}',
   },
