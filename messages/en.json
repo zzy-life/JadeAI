@@ -279,7 +279,9 @@
       "baseURL": "Base URL",
       "model": "Default Model",
       "modelPlaceholder": "Enter model name...",
-      "noModelsFound": "No models found. Enter a model name manually below."
+      "noModelsFound": "No models found. Enter a model name manually below.",
+      "getApiKeyTitle": "Need an API Key?",
+      "getApiKeyDescription": "Register with an official model provider and create your API Key."
     },
     "appearance": {
       "title": "Appearance",

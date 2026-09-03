@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
       default: {
         // openai
-        const effectiveBaseURL = baseURL || 'https://api.openai.com/v1';
+        const effectiveBaseURL = baseURL || 'https://api.deepseek.com';
         const res = await fetch(`${effectiveBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });

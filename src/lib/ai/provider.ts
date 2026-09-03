@@ -13,8 +13,8 @@ export interface AIConfig {
 export function extractAIConfig(request: NextRequest): AIConfig {
   const provider = request.headers.get('x-provider') || 'openai';
   const apiKey = request.headers.get('x-api-key') || '';
-  const baseURL = request.headers.get('x-base-url') || 'https://api.openai.com/v1';
-  const model = request.headers.get('x-model') || 'gpt-4o';
+  const baseURL = request.headers.get('x-base-url') || 'https://api.deepseek.com';
+  const model = request.headers.get('x-model') || '';
   return { provider, apiKey, baseURL, model };
 }
 
@@ -23,6 +23,9 @@ export function getModel(config: AIConfig, modelOverride?: string) {
     throw new AIConfigError('API key is required. Please configure it in Settings.');
   }
   const modelId = modelOverride || config.model;
+  if (!modelId) {
+    throw new AIConfigError('Model is required. Please select one in Settings.');
+  }
 
   switch (config.provider) {
     case 'anthropic': {

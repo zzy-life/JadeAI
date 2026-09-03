@@ -36,9 +36,9 @@ interface ProviderConfig {
 }
 
 const PROVIDER_DEFAULTS: Record<AIProvider, ProviderConfig> = {
-  openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o', apiKey: '' },
-  anthropic: { baseURL: 'https://api.anthropic.com', model: 'claude-sonnet-4-20250514', apiKey: '' },
-  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.0-flash', apiKey: '' },
+  openai: { baseURL: 'https://api.deepseek.com', model: '', apiKey: '' },
+  anthropic: { baseURL: 'https://api.anthropic.com', model: '', apiKey: '' },
+  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: '', apiKey: '' },
 };
 
 function loadProviderConfigs(): Partial<Record<AIProvider, ProviderConfig>> {
@@ -134,8 +134,8 @@ export function getAIHeaders(): Record<string, string> {
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   aiProvider: 'openai',
   aiApiKey: '',
-  aiBaseURL: 'https://api.openai.com/v1',
-  aiModel: 'gpt-4o',
+  aiBaseURL: 'https://api.deepseek.com',
+  aiModel: '',
   autoSave: true,
   autoSaveInterval: 500,
   _hydrated: false,

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ChevronsUpDown, Check, Loader2 } from 'lucide-react';
+import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ChevronsUpDown, Check, Loader2, ExternalLink, KeyRound } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,29 @@ const AI_PROVIDERS: { value: AIProvider; label: string }[] = [
   { value: 'anthropic', label: 'Anthropic' },
   { value: 'gemini', label: 'Google Gemini' },
 ];
+
+const API_KEY_PROVIDERS = [
+  {
+    name: 'DeepSeek',
+    href: 'https://platform.deepseek.com/',
+    accent: 'bg-indigo-500',
+  },
+  {
+    name: '智谱 AI',
+    href: 'https://www.bigmodel.cn/invite?icode=En%2FPGR1ZoTBon45zbbib3pmwcr074zMJTpgMb8zZZvg%3D',
+    accent: 'bg-sky-500',
+  },
+  {
+    name: 'Kimi',
+    href: 'https://platform.kimi.com/',
+    accent: 'bg-zinc-900 dark:bg-zinc-100',
+  },
+  {
+    name: '阿里云百炼',
+    href: 'https://www.aliyun.com/minisite/goods?userCode=o4bkn12u',
+    accent: 'bg-orange-500',
+  },
+] as const;
 
 export function SettingsDialog() {
   const t = useTranslations('settings');
@@ -76,6 +99,7 @@ export function SettingsDialog() {
   const [modelsFetching, setModelsFetching] = useState(false);
   const [modelsFetched, setModelsFetched] = useState(false);
   const modelSearchRef = useRef<HTMLInputElement>(null);
+  const modelRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (isOpen && !_hydrated) {
@@ -93,40 +117,56 @@ export function SettingsDialog() {
     void window.jade?.patchSettings({ resumeCollectionEnabled: enabled });
   };
 
-  // Fetch models when combobox opens or when apiKey/baseURL changes
   const fetchModels = useCallback(async () => {
+    if (!aiApiKey.trim() || !aiBaseURL.trim()) return;
+
+    modelRequestRef.current?.abort();
+    const controller = new AbortController();
+    modelRequestRef.current = controller;
     setModelsFetching(true);
+
     try {
-      const res = await fetch('/api/ai/models', { headers: getAIHeaders() });
+      const res = await fetch('/api/ai/models', {
+        headers: getAIHeaders(),
+        signal: controller.signal,
+      });
       const data = await res.json();
+      if (controller.signal.aborted) return;
+
       const ids = (data.models || []).map((m: { id: string }) => m.id);
       setFetchedModels(ids);
       setModelsFetched(true);
     } catch {
+      if (controller.signal.aborted) return;
       setFetchedModels([]);
       setModelsFetched(true);
     } finally {
-      setModelsFetching(false);
+      if (modelRequestRef.current === controller) {
+        modelRequestRef.current = null;
+        setModelsFetching(false);
+      }
     }
-  }, []);
+  }, [aiApiKey, aiBaseURL, aiProvider]);
 
-  // Re-fetch models when apiKey or baseURL changes
-  const prevKeyRef = useRef(aiApiKey);
-  const prevUrlRef = useRef(aiBaseURL);
+  // Fetch available models after both credentials fields have settled.
   useEffect(() => {
-    if (prevKeyRef.current !== aiApiKey || prevUrlRef.current !== aiBaseURL) {
-      prevKeyRef.current = aiApiKey;
-      prevUrlRef.current = aiBaseURL;
-      setModelsFetched(false);
-      setFetchedModels([]);
-    }
-  }, [aiApiKey, aiBaseURL]);
+    modelRequestRef.current?.abort();
+    modelRequestRef.current = null;
+    setModelsFetching(false);
+    setModelsFetched(false);
+    setFetchedModels([]);
 
-  useEffect(() => {
-    if (modelOpen && !modelsFetched && !modelsFetching) {
-      fetchModels();
-    }
-  }, [modelOpen, modelsFetched, modelsFetching, fetchModels]);
+    if (!aiApiKey.trim() || !aiBaseURL.trim()) return;
+
+    const timeout = setTimeout(() => {
+      void fetchModels();
+    }, 400);
+
+    return () => {
+      clearTimeout(timeout);
+      modelRequestRef.current?.abort();
+    };
+  }, [aiApiKey, aiBaseURL, aiProvider, fetchModels]);
 
   // Focus search input when popover opens
   useEffect(() => {
@@ -178,7 +218,7 @@ export function SettingsDialog() {
           </div>
 
           {/* AI Configuration Tab */}
-          <TabsContent value="ai" className="px-6 pb-6 pt-4 space-y-5">
+          <TabsContent value="ai" className="max-h-[calc(100vh-10rem)] overflow-y-auto px-6 pb-6 pt-4 space-y-5">
             {/* Provider */}
             <div className="space-y-2">
               <Label>{t('ai.provider')}</Label>
@@ -226,7 +266,7 @@ export function SettingsDialog() {
               <Input
                 value={aiBaseURL}
                 onChange={(e) => setAIBaseURL(e.target.value)}
-                placeholder="https://api.openai.com/v1"
+                placeholder="https://api.deepseek.com"
               />
             </div>
 
@@ -306,6 +346,50 @@ export function SettingsDialog() {
                 </PopoverContent>
               </Popover>
             </div>
+
+            <Separator />
+
+            {/* Official API key registration links */}
+            <section
+              className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900/50"
+              aria-labelledby="api-key-providers-title"
+            >
+              <div className="flex items-start gap-3 px-4 py-3.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <KeyRound className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 id="api-key-providers-title" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {t('ai.getApiKeyTitle')}
+                  </h3>
+                  <p className="mt-0.5 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                    {t('ai.getApiKeyDescription')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 border-t border-zinc-200 dark:border-zinc-800">
+                {API_KEY_PROVIDERS.map((provider, index) => (
+                  <a
+                    key={provider.name}
+                    href={provider.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'group flex min-w-0 items-center gap-2.5 px-3 py-3 text-left transition-colors hover:bg-white focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset dark:hover:bg-zinc-800',
+                      index % 2 !== 0 && 'border-l border-zinc-200 dark:border-zinc-800',
+                      index >= 2 && 'border-t border-zinc-200 dark:border-zinc-800'
+                    )}
+                  >
+                    <span className={cn('h-2 w-2 shrink-0 rounded-full ring-4 ring-white dark:ring-zinc-900', provider.accent)} />
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                      {provider.name}
+                    </span>
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-zinc-300 transition-colors group-hover:text-emerald-600 dark:text-zinc-600 dark:group-hover:text-emerald-400" />
+                  </a>
+                ))}
+              </div>
+            </section>
           </TabsContent>
 
           {/* Appearance Tab */}

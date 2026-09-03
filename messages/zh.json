@@ -279,7 +279,9 @@
       "baseURL": "API 地址",
       "model": "默认模型",
       "modelPlaceholder": "输入模型名称...",
-      "noModelsFound": "未找到模型，请在下方手动输入模型名称。"
+      "noModelsFound": "未找到模型，请在下方手动输入模型名称。",
+      "getApiKeyTitle": "还没有 API Key？",
+      "getApiKeyDescription": "前往模型服务商官方平台，注册并创建你的 API Key。"
     },
     "appearance": {
       "title": "外观",
