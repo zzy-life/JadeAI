@@ -33,6 +33,7 @@ import { useTourStore } from '@/stores/tour-store';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { locales, localeNames } from '@/i18n/config';
 import { cn } from '@/lib/utils';
+import { getAIRequestURL } from '@/lib/ai/base-url';
 
 const AI_PROVIDERS: { value: AIProvider; label: string }[] = [
   { value: 'openai', label: 'OpenAI' },
@@ -57,8 +58,8 @@ const API_KEY_PROVIDERS = [
     accent: 'bg-zinc-900 dark:bg-zinc-100',
   },
   {
-    name: '阿里云百炼',
-    href: 'https://www.aliyun.com/minisite/goods?userCode=o4bkn12u',
+    name: '中转站（体验最佳）',
+    href: 'https://api.holdai.top/register?aff=5dfdf817313',
     accent: 'bg-orange-500',
   },
 ] as const;
@@ -76,12 +77,14 @@ export function SettingsDialog() {
     aiApiKey,
     aiBaseURL,
     aiModel,
+    aiImageModel,
     autoSave,
     autoSaveInterval,
     setAIProvider,
     setAIApiKey,
     setAIBaseURL,
     setAIModel,
+    setAIImageModel,
     setAutoSave,
     setAutoSaveInterval,
     hydrate,
@@ -183,6 +186,8 @@ export function SettingsDialog() {
     m.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
+  const requestURL = getAIRequestURL(aiProvider, aiBaseURL, aiModel);
+
   const handleLocaleChange = (newLocale: string) => {
     router.replace(pathname, { locale: newLocale });
   };
@@ -271,6 +276,16 @@ export function SettingsDialog() {
                 onChange={(e) => setAIBaseURL(e.target.value)}
                 placeholder="https://api.deepseek.com"
               />
+              {requestURL && (
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {t('ai.requestURLPreview')}
+                  </p>
+                  <p className="mt-1 break-all font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                    {requestURL}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Model — Combobox */}
@@ -350,6 +365,25 @@ export function SettingsDialog() {
               </Popover>
               <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
                 {t('ai.modelHint')}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('ai.imageModel')}</Label>
+              <Input
+                value={aiImageModel}
+                onChange={(e) => setAIImageModel(e.target.value)}
+                placeholder={t(aiProvider === 'gemini' ? 'ai.imageModelPlaceholderGemini' : 'ai.imageModelPlaceholderOpenAI')}
+                disabled={aiProvider === 'anthropic'}
+              />
+              <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                {t(
+                  aiProvider === 'gemini'
+                    ? 'ai.imageModelHintGemini'
+                    : aiProvider === 'openai'
+                      ? 'ai.imageModelHintOpenAI'
+                      : 'ai.imageModelUnsupported'
+                )}
               </p>
             </div>
 

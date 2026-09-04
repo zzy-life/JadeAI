@@ -7,21 +7,18 @@ import {
   Download,
   RefreshCw,
   UserCircle,
-  Eye,
-  EyeOff,
   ChevronDown,
   ChevronUp,
   Upload,
   ImageIcon,
   Loader2,
-  ArrowLeft,
   Sparkles,
   Video,
   X,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
@@ -31,20 +28,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Link } from '@/i18n/routing';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { Resume } from '@/types/resume';
+import { getAIHeaders, migrateLegacyGeminiConfig, useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 
-const API_KEY_STORAGE_KEY = 'jade_nanobanana_api_key';
+const LEGACY_API_KEY_STORAGE_KEY = 'jade_nanobanana_api_key';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const ASPECT_RATIOS = [
-  { label: '1:1', value: '1:1', desc: 'LinkedIn / WeChat' },
-  { label: '3:4', value: '3:4', desc: 'ID Photo' },
-  { label: '2:3', value: '2:3', desc: 'Portrait' },
-  { label: '4:3', value: '4:3', desc: 'Landscape' },
-];
+  { label: '1:1', value: '1:1', descKey: 'sizeSquare' },
+  { label: '3:4', value: '3:4', descKey: 'sizeIdPhoto' },
+  { label: '2:3', value: '2:3', descKey: 'sizePortrait' },
+  { label: '4:3', value: '4:3', descKey: 'sizeLandscape' },
+] as const;
 
 function getHeaders() {
   const fingerprint =
@@ -124,10 +122,15 @@ function resizeDataUrl(
 
 export default function LinkedInPhotoPage() {
   const t = useTranslations('linkedinPhoto');
-
-  // API Key
-  const [apiKey, setApiKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
+  const aiProvider = useSettingsStore((state) => state.aiProvider);
+  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
+  const aiImageModel = useSettingsStore((state) => state.aiImageModel);
+  const settingsHydrated = useSettingsStore((state) => state._hydrated);
+  const openAISettings = useUIStore((state) => state.openAISettings);
+  const supportsImageGeneration = aiProvider === 'gemini' || aiProvider === 'openai';
+  const hasImageGenerationConfig = Boolean(
+    settingsHydrated && supportsImageGeneration && aiApiKey.trim() && aiImageModel.trim()
+  );
 
   // Upload
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -157,10 +160,17 @@ export default function LinkedInPhotoPage() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
 
-  // Load API key, default prompt, and resume list on mount
+  // Migrate the former LinkedIn-photo-only Gemini key into the shared Gemini config.
   useEffect(() => {
-    const stored = localStorage.getItem(API_KEY_STORAGE_KEY);
-    if (stored) setApiKey(stored);
+    const legacyApiKey = localStorage.getItem(LEGACY_API_KEY_STORAGE_KEY);
+    if (legacyApiKey) {
+      migrateLegacyGeminiConfig(legacyApiKey);
+      localStorage.removeItem(LEGACY_API_KEY_STORAGE_KEY);
+    }
+  }, []);
+
+  // Load default prompt and resume list on mount
+  useEffect(() => {
     setPrompt(t('promptDefault'));
 
     // Fetch resume list
@@ -181,12 +191,6 @@ export default function LinkedInPhotoPage() {
       }
     };
   }, []);
-
-  // Persist API key
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value);
-    localStorage.setItem(API_KEY_STORAGE_KEY, value);
-  };
 
   // File handling
   const handleFile = useCallback(
@@ -298,8 +302,8 @@ export default function LinkedInPhotoPage() {
 
   // Generate
   const handleGenerate = async () => {
-    if (!apiKey.trim()) {
-      toast.error(t('errorNoApiKey'));
+    if (!hasImageGenerationConfig) {
+      toast.error(t('errorNoImageModel'));
       return;
     }
     if (!uploadedImage) {
@@ -313,13 +317,12 @@ export default function LinkedInPhotoPage() {
     try {
       const res = await fetch('/api/linkedin-photo', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAIHeaders() },
         body: JSON.stringify({
           image: uploadedImage,
           prompt,
           requirements: requirements.trim(),
           aspectRatio,
-          apiKey: apiKey.trim(),
         }),
       });
 
@@ -328,8 +331,12 @@ export default function LinkedInPhotoPage() {
       if (!res.ok) {
         if (data.error === 'invalid_key') {
           toast.error(t('errorInvalidKey'));
+        } else if (data.error === 'ai_config_required' || data.error === 'unsupported_provider') {
+          toast.error(t('errorNoImageModel'));
         } else if (data.error === 'safety_filtered') {
           toast.error(t('errorSafety'));
+        } else if (data.error === 'image_not_returned') {
+          toast.error(t('errorImageNotReturned'));
         } else {
           toast.error(t('errorGenerate'));
         }
@@ -349,7 +356,7 @@ export default function LinkedInPhotoPage() {
     if (!resultImage) return;
     const link = document.createElement('a');
     link.href = resultImage;
-    link.download = `linkedin-photo-${Date.now()}.png`;
+    link.download = `id-photo-${Date.now()}.png`;
     link.click();
   };
 
@@ -408,58 +415,42 @@ export default function LinkedInPhotoPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer gap-1.5"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t('back')}
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-foreground">
-            {t('title')}
-          </h1>
-          <p className="mt-0.5 text-sm text-zinc-500">{t('subtitle')}</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-foreground">
+          {t('title')}
+        </h1>
+        <p className="mt-0.5 text-sm text-zinc-500">{t('subtitle')}</p>
       </div>
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Left Column — Settings & Upload */}
         <div className="space-y-6">
-          {/* API Key */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <Label className="mb-2 block text-sm font-medium">
-              {t('apiKey')}
-            </Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  type={showKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => handleApiKeyChange(e.target.value)}
-                  placeholder={t('apiKeyPlaceholder')}
-                  className="pr-10"
-                />
-                <button
+          {settingsHydrated && !hasImageGenerationConfig && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 shadow-sm dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200" role="alert">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{t('configRequired')}</p>
+                <p className="mt-1 text-xs leading-5 opacity-80">
+                  {t(supportsImageGeneration ? 'configRequiredHint' : 'providerUnsupportedHint')}
+                </p>
+                <Button
                   type="button"
-                  onClick={() => setShowKey(!showKey)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  size="sm"
+                  onClick={openAISettings}
+                  className="mt-3 cursor-pointer bg-amber-700 text-white hover:bg-amber-800"
                 >
-                  {showKey ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+                  {t('configureAI')}
+                </Button>
               </div>
             </div>
-            <p className="mt-1.5 text-xs text-zinc-400">{t('apiKeyHint')}</p>
-          </div>
+          )}
+
+          {hasImageGenerationConfig && (
+            <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+              {t('usingImageModel', { model: aiImageModel })}
+            </div>
+          )}
 
           {/* Image Upload / Camera */}
           <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -491,7 +482,7 @@ export default function LinkedInPhotoPage() {
                   {capturedImage && (
                     <img
                       src={capturedImage}
-                      alt="Captured selfie"
+                      alt={t('capturedImageAlt')}
                       className="w-full object-contain"
                     />
                   )}
@@ -550,7 +541,7 @@ export default function LinkedInPhotoPage() {
                 <div className="relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
                   <img
                     src={uploadedImage}
-                    alt="Selfie preview"
+                    alt={t('uploadedImageAlt')}
                     className="max-h-64 w-auto object-contain"
                   />
                 </div>
@@ -635,7 +626,9 @@ export default function LinkedInPhotoPage() {
                   )}
                 >
                   <span className="text-sm font-medium">{r.label}</span>
-                  <span className="text-[10px] leading-none opacity-60">{r.desc}</span>
+                  <span className="text-[10px] leading-none opacity-60">
+                    {t(r.descKey)}
+                  </span>
                 </button>
               ))}
             </div>
@@ -685,7 +678,7 @@ export default function LinkedInPhotoPage() {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !apiKey.trim() || !uploadedImage}
+            disabled={isGenerating || !hasImageGenerationConfig || !uploadedImage}
             className="w-full cursor-pointer gap-2 bg-brand py-6 text-base font-medium hover:bg-brand-hover disabled:opacity-50"
           >
             {isGenerating ? (
@@ -729,7 +722,7 @@ export default function LinkedInPhotoPage() {
                   <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
                     <img
                       src={resultImage}
-                      alt="LinkedIn headshot"
+                      alt={t('resultImageAlt')}
                       className="w-full max-w-md object-contain"
                     />
                   </div>

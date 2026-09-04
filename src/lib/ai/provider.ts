@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { normalizeAIBaseURL } from './base-url';
 
 export interface AIConfig {
   provider: string;
@@ -22,6 +23,7 @@ export function getModel(config: AIConfig, modelOverride?: string) {
   if (!config.apiKey) {
     throw new AIConfigError('API key is required. Please configure it in Settings.');
   }
+  const baseURL = normalizeAIBaseURL(config.baseURL);
   const modelId = modelOverride || config.model;
   if (!modelId) {
     throw new AIConfigError('Model is required. Please select one in Settings.');
@@ -29,15 +31,15 @@ export function getModel(config: AIConfig, modelOverride?: string) {
 
   switch (config.provider) {
     case 'anthropic': {
-      const p = createAnthropic({ apiKey: config.apiKey, baseURL: config.baseURL || undefined });
+      const p = createAnthropic({ apiKey: config.apiKey, baseURL: baseURL || undefined });
       return p(modelId);
     }
     case 'gemini': {
-      const p = createGoogleGenerativeAI({ apiKey: config.apiKey, baseURL: config.baseURL || undefined });
+      const p = createGoogleGenerativeAI({ apiKey: config.apiKey, baseURL: baseURL || undefined });
       return p(modelId);
     }
     default: {
-      const p = createOpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
+      const p = createOpenAI({ apiKey: config.apiKey, baseURL });
       return p.chat(modelId);
     }
   }

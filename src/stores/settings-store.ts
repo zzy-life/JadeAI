@@ -8,6 +8,7 @@ interface SettingsStore {
   aiApiKey: string; // stored locally only, never sent to server
   aiBaseURL: string;
   aiModel: string;
+  aiImageModel: string;
   // Editor settings
   autoSave: boolean;
   autoSaveInterval: number; // in milliseconds
@@ -21,6 +22,7 @@ interface SettingsStore {
   setAIApiKey: (key: string) => void;
   setAIBaseURL: (url: string) => void;
   setAIModel: (model: string) => void;
+  setAIImageModel: (model: string) => void;
   setAutoSave: (enabled: boolean) => void;
   setAutoSaveInterval: (interval: number) => void;
   hydrate: () => void;
@@ -32,13 +34,14 @@ const PROVIDER_CONFIGS_KEY = 'jade_provider_configs';
 interface ProviderConfig {
   baseURL: string;
   model: string;
+  imageModel?: string;
   apiKey: string;
 }
 
 const PROVIDER_DEFAULTS: Record<AIProvider, ProviderConfig> = {
-  openai: { baseURL: 'https://api.deepseek.com', model: '', apiKey: '' },
-  anthropic: { baseURL: 'https://api.anthropic.com', model: '', apiKey: '' },
-  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: '', apiKey: '' },
+  openai: { baseURL: 'https://api.deepseek.com', model: '', imageModel: '', apiKey: '' },
+  anthropic: { baseURL: 'https://api.anthropic.com', model: '', imageModel: '', apiKey: '' },
+  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: '', imageModel: '', apiKey: '' },
 };
 
 function loadProviderConfigs(): Partial<Record<AIProvider, ProviderConfig>> {
@@ -81,6 +84,7 @@ function syncToServer(state: SettingsStore) {
           aiProvider: state.aiProvider,
           aiBaseURL: state.aiBaseURL,
           aiModel: state.aiModel,
+          aiImageModel: state.aiImageModel,
           autoSave: state.autoSave,
           autoSaveInterval: state.autoSaveInterval,
         }),
@@ -96,9 +100,28 @@ function syncProviderConfig(state: SettingsStore) {
   configs[state.aiProvider] = {
     baseURL: state.aiBaseURL,
     model: state.aiModel,
+    imageModel: state.aiImageModel,
     apiKey: state.aiApiKey,
   };
   saveProviderConfigs(configs);
+}
+
+export function migrateLegacyGeminiConfig(apiKey: string) {
+  const state = useSettingsStore.getState();
+  const configs = loadProviderConfigs();
+  const existing = configs.gemini || PROVIDER_DEFAULTS.gemini;
+  const migrated = {
+    ...existing,
+    apiKey: existing.apiKey || apiKey,
+    imageModel: existing.imageModel || 'gemini-3.1-flash-image-preview',
+  };
+  configs.gemini = migrated;
+  saveProviderConfigs(configs);
+
+  if (state.aiProvider === 'gemini') {
+    if (!state.aiApiKey) state.setAIApiKey(migrated.apiKey);
+    if (!state.aiImageModel) state.setAIImageModel(migrated.imageModel);
+  }
 }
 
 function saveApiKeyLocally(key: string) {
@@ -126,12 +149,13 @@ export function hasCompleteAIConfig(config: { aiApiKey: string; aiModel: string 
 }
 
 export function getAIHeaders(): Record<string, string> {
-  const { aiProvider, aiApiKey, aiBaseURL, aiModel } = useSettingsStore.getState();
+  const { aiProvider, aiApiKey, aiBaseURL, aiModel, aiImageModel } = useSettingsStore.getState();
   const headers: Record<string, string> = {};
   if (aiProvider) headers['x-provider'] = aiProvider;
   if (aiApiKey) headers['x-api-key'] = aiApiKey;
   if (aiBaseURL) headers['x-base-url'] = aiBaseURL;
   if (aiModel) headers['x-model'] = aiModel;
+  if (aiImageModel) headers['x-image-model'] = aiImageModel;
   return headers;
 }
 
@@ -140,17 +164,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   aiApiKey: '',
   aiBaseURL: 'https://api.deepseek.com',
   aiModel: '',
+  aiImageModel: '',
   autoSave: true,
   autoSaveInterval: 500,
   _hydrated: false,
   _syncing: false,
 
   setAIProvider: (provider) => {
-    const { aiProvider: prev, aiBaseURL, aiModel, aiApiKey } = get();
+    const { aiProvider: prev, aiBaseURL, aiModel, aiImageModel, aiApiKey } = get();
 
     // Save current provider's config before switching
     const configs = loadProviderConfigs();
-    configs[prev] = { baseURL: aiBaseURL, model: aiModel, apiKey: aiApiKey };
+    configs[prev] = { baseURL: aiBaseURL, model: aiModel, imageModel: aiImageModel, apiKey: aiApiKey };
     saveProviderConfigs(configs);
 
     // Restore target provider's cached config, or use defaults
@@ -162,6 +187,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       aiProvider: provider,
       aiBaseURL: restored.baseURL,
       aiModel: restored.model,
+      aiImageModel: restored.imageModel || '',
       aiApiKey: restored.apiKey,
     });
     saveApiKeyLocally(restored.apiKey);
@@ -182,6 +208,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   setAIModel: (model) => {
     set({ aiModel: model });
+    syncToServer(get());
+    syncProviderConfig(get());
+  },
+
+  setAIImageModel: (model) => {
+    set({ aiImageModel: model });
     syncToServer(get());
     syncProviderConfig(get());
   },
@@ -210,10 +242,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         const data = await res.json();
         // Backward compat: map legacy 'custom' provider to 'openai'
         const provider = (data.aiProvider === 'custom' || data.aiProvider === 'azure') ? 'openai' : data.aiProvider;
+        const cachedProvider = provider ? loadProviderConfigs()[provider as AIProvider] : undefined;
+        const cachedProviderKey = cachedProvider?.apiKey || (provider === get().aiProvider ? apiKey : '');
         set({
           ...(provider && { aiProvider: provider }),
+          aiApiKey: cachedProviderKey,
           ...(data.aiBaseURL && { aiBaseURL: data.aiBaseURL }),
           ...(data.aiModel && { aiModel: data.aiModel }),
+          ...(typeof data.aiImageModel === 'string'
+            ? { aiImageModel: data.aiImageModel }
+            : cachedProvider?.imageModel
+              ? { aiImageModel: cachedProvider.imageModel }
+              : {}),
           ...(typeof data.autoSave === 'boolean' && { autoSave: data.autoSave }),
           ...(typeof data.autoSaveInterval === 'number' && { autoSaveInterval: data.autoSaveInterval }),
           _hydrated: true,

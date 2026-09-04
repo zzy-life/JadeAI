@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: { href: string; i18nKey: string; match: string; tourId?: string }[] = [
   { href: '/dashboard', i18nKey: 'dashboard.nav', match: '/dashboard' },
+  { href: '/linkedin-photo', i18nKey: 'dashboard.linkedinPhoto', match: '/linkedin-photo' },
   { href: '/templates', i18nKey: 'templates.nav', match: '/templates', tourId: 'dash-templates' },
   { href: '/interview', i18nKey: 'interview.nav', match: '/interview' },
   { href: '/recruit', i18nKey: 'recruit.nav', match: '/recruit' },
