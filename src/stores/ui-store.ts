@@ -11,6 +11,7 @@ interface UIStore {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   openModal: (modal: ModalType) => void;
+  openAISettings: () => void;
   closeModal: () => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setSettingsTab: (tab: string) => void;
@@ -25,6 +26,7 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   openModal: (modal) => set({ activeModal: modal }),
+  openAISettings: () => set({ activeModal: 'settings', settingsTab: 'ai' }),
   closeModal: () => set({ activeModal: null }),
   setTheme: (theme) => set({ theme }),
   setSettingsTab: (tab) => set({ settingsTab: tab }),

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Upload, Loader2, Check, FileText, X } from 'lucide-react';
+import { Upload, Loader2, Check, FileText, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from '@/i18n/routing';
 import {
@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFingerprint } from '@/hooks/use-fingerprint';
-import { getAIHeaders } from '@/stores/settings-store';
+import { getAIHeaders, hasCompleteAIConfig, useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/lib/utils';
 import {
   CandidateSetupError,
@@ -55,6 +56,12 @@ export function CandidateDialog({
   const t = useTranslations('recruit');
   const router = useRouter();
   const { fingerprint } = useFingerprint();
+  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
+  const aiModel = useSettingsStore((state) => state.aiModel);
+  const settingsHydrated = useSettingsStore((state) => state._hydrated);
+  const activeModal = useUIStore((state) => state.activeModal);
+  const openAISettings = useUIStore((state) => state.openAISettings);
+  const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
   const fileRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<CandidateSetupProgress>({
     candidateId: candidate?.id ?? null,
@@ -79,12 +86,13 @@ export function CandidateDialog({
   }, [open, candidate]);
 
   const hasResume = progress.resumeSaved || Boolean(file) || Boolean(text.trim());
-  const canSubmit = (editing || name.trim()) && hasResume && running === null;
+  const canSubmit = settingsHydrated && hasAIConfig && (editing || name.trim()) && hasResume && running === null;
   const createdInThisFlow = !editing && Boolean(progress.candidateId);
   const resumeLocked = progress.resumeSaved;
 
   const headers = (): Record<string, string> =>
     fingerprint ? { 'x-fingerprint': fingerprint } : {};
+
 
   async function handleSubmit() {
     setFailedAt(null);
@@ -166,7 +174,7 @@ export function CandidateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => running === null && onOpenChange(o)}>
+    <Dialog open={open && activeModal !== 'settings'} onOpenChange={(o) => running === null && activeModal !== 'settings' && onOpenChange(o)}>
       <DialogContent
         className="sm:max-w-lg"
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -197,6 +205,7 @@ export function CandidateDialog({
               type="file"
               accept="application/pdf,image/png,image/jpeg,image/webp"
               className="hidden"
+              disabled={running !== null || resumeLocked || !settingsHydrated || !hasAIConfig}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) {
@@ -225,7 +234,7 @@ export function CandidateDialog({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                disabled={running !== null || resumeLocked}
+                disabled={running !== null || resumeLocked || !settingsHydrated || !hasAIConfig}
                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-3 py-3 text-left transition-colors hover:border-brand disabled:opacity-40 dark:border-zinc-700"
               >
                 <Upload className="h-4 w-4 shrink-0 text-zinc-400" />
@@ -234,6 +243,23 @@ export function CandidateDialog({
                   <span className="block text-xs text-zinc-500">{t('resume.uploadHint')}</span>
                 </span>
               </button>
+            )}
+            {settingsHydrated && (
+              <div className={hasAIConfig ? 'text-xs text-zinc-500 dark:text-zinc-400' : 'flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200'}>
+                {!hasAIConfig && <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                <div>
+                  <span>{t(hasAIConfig ? 'resume.multimodalHint' : 'resume.aiRequired')}</span>
+                  {!hasAIConfig && (
+                    <button
+                      type="button"
+                      onClick={openAISettings}
+                      className="ml-1 cursor-pointer font-medium underline underline-offset-2"
+                    >
+                      {t('resume.configureAI')}
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 

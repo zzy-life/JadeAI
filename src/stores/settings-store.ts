@@ -121,6 +121,10 @@ function loadApiKeyLocally(): string {
   }
 }
 
+export function hasCompleteAIConfig(config: { aiApiKey: string; aiModel: string }): boolean {
+  return Boolean(config.aiApiKey.trim() && config.aiModel.trim());
+}
+
 export function getAIHeaders(): Record<string, string> {
   const { aiProvider, aiApiKey, aiBaseURL, aiModel } = useSettingsStore.getState();
   const headers: Record<string, string> = {};

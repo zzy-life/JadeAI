@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import {
@@ -14,8 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TEMPLATES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
-import { getAIHeaders } from '@/stores/settings-store';
-import { Upload, FileText, Image, X, Loader2, Check } from 'lucide-react';
+import { getAIHeaders, hasCompleteAIConfig, useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
+import { Upload, FileText, Image, X, Loader2, Check, AlertCircle } from 'lucide-react';
 import { TemplateThumbnail } from './template-thumbnail';
 import { templateLabelsMap } from '@/lib/template-labels';
 
@@ -32,6 +33,13 @@ const ACCEPTED_EXTENSIONS = '.pdf,.png,.jpg,.jpeg,.webp';
 export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDialogProps) {
   const t = useTranslations();
   const router = useRouter();
+  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
+  const aiModel = useSettingsStore((state) => state.aiModel);
+  const settingsHydrated = useSettingsStore((state) => state._hydrated);
+  const activeModal = useUIStore((state) => state.activeModal);
+  const openModal = useUIStore((state) => state.openModal);
+  const openAISettingsModal = useUIStore((state) => state.openAISettings);
+  const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
   const [tab, setTab] = useState<Tab>('template');
   const [title, setTitle] = useState('');
   const [template, setTemplate] = useState<string>('classic');
@@ -43,6 +51,14 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
   const [parseError, setParseError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resumeAfterSettingsRef = useRef(false);
+
+  useEffect(() => {
+    if (resumeAfterSettingsRef.current && activeModal === null) {
+      resumeAfterSettingsRef.current = false;
+      openModal('create-resume');
+    }
+  }, [activeModal, openModal]);
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -71,8 +87,13 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
     setFile(selectedFile);
   };
 
+  const openAISettings = () => {
+    resumeAfterSettingsRef.current = true;
+    openAISettingsModal();
+  };
+
   const handleUploadParse = async () => {
-    if (!file) return;
+    if (!file || !hasAIConfig) return;
     setIsParsing(true);
     setParseError('');
 
@@ -112,29 +133,32 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
     setParseError('');
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const fileSelectionDisabled = !settingsHydrated || !hasAIConfig;
+
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    if (fileSelectionDisabled) return;
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) handleFileSelect(droppedFile);
-  }, []);
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-  }, []);
+    if (!fileSelectionDisabled) setIsDragging(true);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  };
 
   const fileIcon = file?.type === 'application/pdf' ? FileText : Image;
   const FileIcon = fileIcon;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
-      <DialogContent className="sm:max-w-4xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 gap-0 sm:max-w-4xl">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle>{t('dashboard.createResume')}</DialogTitle>
           <DialogDescription>{t('dashboard.createResumeDescription')}</DialogDescription>
@@ -168,7 +192,7 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
           </button>
         </div>
 
-        <div className="px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
           {tab === 'template' ? (
             <div className="space-y-4">
               <Input
@@ -232,11 +256,13 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
               <div
                 className={cn(
                   'relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-colors',
-                  isDragging
-                    ? 'border-brand bg-brand-muted dark:bg-brand-muted'
-                    : file
-                      ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/20'
-                      : 'border-zinc-300 hover:border-zinc-400 dark:border-zinc-600 dark:hover:border-zinc-500'
+                  fileSelectionDisabled
+                    ? 'border-zinc-200 bg-zinc-50 opacity-60 dark:border-zinc-800 dark:bg-zinc-900/40'
+                    : isDragging
+                      ? 'border-brand bg-brand-muted dark:bg-brand-muted'
+                      : file
+                        ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/20'
+                        : 'border-zinc-300 hover:border-zinc-400 dark:border-zinc-600 dark:hover:border-zinc-500'
                 )}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -253,6 +279,7 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
                     </div>
                     <button
                       type="button"
+                      aria-label={t('common.delete')}
                       className="cursor-pointer rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700"
                       onClick={() => setFile(null)}
                     >
@@ -266,7 +293,8 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
                     <p className="mt-1 text-xs text-zinc-400">{t('dashboard.upload.acceptedTypes')}</p>
                     <button
                       type="button"
-                      className="mt-3 cursor-pointer rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      disabled={fileSelectionDisabled}
+                      className="mt-3 cursor-pointer rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {t('dashboard.upload.browse')}
@@ -278,6 +306,7 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
                   type="file"
                   accept={ACCEPTED_EXTENSIONS}
                   className="hidden"
+                  disabled={fileSelectionDisabled}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFileSelect(f);
@@ -285,6 +314,29 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
                   }}
                 />
               </div>
+
+              {settingsHydrated && (
+                <div className={cn(
+                  'flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm',
+                  hasAIConfig
+                    ? 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200'
+                    : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200'
+                )}>
+                  {!hasAIConfig && <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <p>{t(hasAIConfig ? 'dashboard.upload.multimodalHint' : 'dashboard.upload.aiRequired')}</p>
+                    {!hasAIConfig && (
+                      <button
+                        type="button"
+                        onClick={openAISettings}
+                        className="mt-1 cursor-pointer font-medium underline underline-offset-2"
+                      >
+                        {t('dashboard.upload.configureAI')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {parseError && (
                 <p className="text-sm text-red-500">{parseError}</p>
@@ -341,7 +393,7 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+        <div className="shrink-0 flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
           <Button variant="outline" onClick={resetAndClose} className="cursor-pointer">
             {t('common.cancel')}
           </Button>
@@ -356,7 +408,7 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
           ) : (
             <Button
               onClick={handleUploadParse}
-              disabled={!file || isParsing}
+              disabled={!file || isParsing || !settingsHydrated || !hasAIConfig}
               className="cursor-pointer bg-brand hover:bg-brand-hover"
             >
               {isParsing ? (

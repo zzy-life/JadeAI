@@ -348,6 +348,9 @@ export function SettingsDialog() {
                   </div>
                 </PopoverContent>
               </Popover>
+              <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                {t('ai.modelHint')}
+              </p>
             </div>
 
             <Separator />

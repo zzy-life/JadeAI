@@ -115,7 +115,7 @@ function ToolCallCard({ part }: { part: any }) {
 
 function APIKeyMissingCard() {
   const t = useTranslations('ai');
-  const { openModal, setSettingsTab } = useUIStore();
+  const openAISettings = useUIStore((state) => state.openAISettings);
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
@@ -129,10 +129,7 @@ function APIKeyMissingCard() {
       <button
         type="button"
         className="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-1.5 text-[12px] font-medium text-amber-700 transition-colors hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-900"
-        onClick={() => {
-          setSettingsTab('ai');
-          openModal('settings');
-        }}
+        onClick={openAISettings}
       >
         <Settings className="h-3.5 w-3.5" />
         {t('goToSettings')}
