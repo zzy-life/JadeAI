@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ChevronsUpDown, Check, Loader2, ExternalLink, KeyRound, Gift, MessageCircle } from 'lucide-react';
+import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ExternalLink, KeyRound, Gift, MessageCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,9 +26,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useUIStore } from '@/stores/ui-store';
-import { useSettingsStore, getAIHeaders, type AIProvider } from '@/stores/settings-store';
+import { useSettingsStore, type AIProvider } from '@/stores/settings-store';
 import { useTourStore } from '@/stores/tour-store';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { locales, localeNames } from '@/i18n/config';
@@ -66,7 +65,6 @@ const API_KEY_PROVIDERS = [
 
 export function SettingsDialog() {
   const t = useTranslations('settings');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -97,15 +95,6 @@ export function SettingsDialog() {
   const [resumeCollectionEnabled, setResumeCollectionEnabled] = useState(true);
   const isOpen = activeModal === 'settings';
 
-  // Model combobox state
-  const [modelOpen, setModelOpen] = useState(false);
-  const [modelSearch, setModelSearch] = useState('');
-  const [fetchedModels, setFetchedModels] = useState<string[]>([]);
-  const [modelsFetching, setModelsFetching] = useState(false);
-  const [modelsFetched, setModelsFetched] = useState(false);
-  const modelSearchRef = useRef<HTMLInputElement>(null);
-  const modelRequestRef = useRef<AbortController | null>(null);
-
   useEffect(() => {
     if (isOpen && !_hydrated) {
       hydrate();
@@ -121,70 +110,6 @@ export function SettingsDialog() {
     setResumeCollectionEnabled(enabled);
     void window.jade?.patchSettings({ resumeCollectionEnabled: enabled });
   };
-
-  const fetchModels = useCallback(async () => {
-    if (!aiApiKey.trim() || !aiBaseURL.trim()) return;
-
-    modelRequestRef.current?.abort();
-    const controller = new AbortController();
-    modelRequestRef.current = controller;
-    setModelsFetching(true);
-
-    try {
-      const res = await fetch('/api/ai/models', {
-        headers: getAIHeaders(),
-        signal: controller.signal,
-      });
-      const data = await res.json();
-      if (controller.signal.aborted) return;
-
-      const ids = (data.models || []).map((m: { id: string }) => m.id);
-      setFetchedModels(ids);
-      setModelsFetched(true);
-    } catch {
-      if (controller.signal.aborted) return;
-      setFetchedModels([]);
-      setModelsFetched(true);
-    } finally {
-      if (modelRequestRef.current === controller) {
-        modelRequestRef.current = null;
-        setModelsFetching(false);
-      }
-    }
-  }, [aiApiKey, aiBaseURL, aiProvider]);
-
-  // Fetch available models after both credentials fields have settled.
-  useEffect(() => {
-    modelRequestRef.current?.abort();
-    modelRequestRef.current = null;
-    setModelsFetching(false);
-    setModelsFetched(false);
-    setFetchedModels([]);
-
-    if (!aiApiKey.trim() || !aiBaseURL.trim()) return;
-
-    const timeout = setTimeout(() => {
-      void fetchModels();
-    }, 400);
-
-    return () => {
-      clearTimeout(timeout);
-      modelRequestRef.current?.abort();
-    };
-  }, [aiApiKey, aiBaseURL, aiProvider, fetchModels]);
-
-  // Focus search input when popover opens
-  useEffect(() => {
-    if (modelOpen) {
-      setTimeout(() => modelSearchRef.current?.focus(), 50);
-    } else {
-      setModelSearch('');
-    }
-  }, [modelOpen]);
-
-  const filteredModels = fetchedModels.filter((m) =>
-    m.toLowerCase().includes(modelSearch.toLowerCase())
-  );
 
   const requestURL = getAIRequestURL(aiProvider, aiBaseURL, aiModel);
 
@@ -288,81 +213,14 @@ export function SettingsDialog() {
               )}
             </div>
 
-            {/* Model — Combobox */}
+            {/* Default model */}
             <div className="space-y-2">
               <Label>{t('ai.model')}</Label>
-              <Popover open={modelOpen} onOpenChange={setModelOpen} modal={false}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={modelOpen}
-                    className="w-full justify-between cursor-pointer font-normal"
-                  >
-                    <span className="truncate">{aiModel || t('ai.modelPlaceholder')}</span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  {/* Search input */}
-                  <div className="border-b px-3 py-2">
-                    <Input
-                      ref={modelSearchRef}
-                      value={modelSearch}
-                      onChange={(e) => setModelSearch(e.target.value)}
-                      placeholder={tCommon('search')}
-                      className="h-8 border-0 p-0 shadow-none focus-visible:ring-0"
-                    />
-                  </div>
-
-                  {/* Model list */}
-                  <div className="max-h-48 overflow-y-auto p-1" onWheel={(e) => e.stopPropagation()}>
-                    {modelsFetching && (
-                      <div className="flex items-center justify-center py-4 text-sm text-zinc-400">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {tCommon('loading')}
-                      </div>
-                    )}
-
-                    {!modelsFetching && filteredModels.length === 0 && modelsFetched && (
-                      <div className="py-3 text-center text-xs text-zinc-400">
-                        {t('ai.noModelsFound')}
-                      </div>
-                    )}
-
-                    {filteredModels.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        className={cn(
-                          'flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800',
-                          aiModel === m && 'bg-zinc-100 dark:bg-zinc-800'
-                        )}
-                        onClick={() => {
-                          setAIModel(m);
-                          setModelOpen(false);
-                        }}
-                      >
-                        <Check className={cn('mr-2 h-4 w-4', aiModel === m ? 'opacity-100' : 'opacity-0')} />
-                        <span className="truncate">{m}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Manual entry */}
-                  <div className="border-t px-3 py-2">
-                    <Input
-                      value={aiModel}
-                      onChange={(e) => setAIModel(e.target.value)}
-                      placeholder={t('ai.modelPlaceholder')}
-                      className="h-8 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') setModelOpen(false);
-                      }}
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Input
+                value={aiModel}
+                onChange={(e) => setAIModel(e.target.value)}
+                placeholder={t('ai.modelPlaceholder')}
+              />
               <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
                 {t('ai.modelHint')}
               </p>

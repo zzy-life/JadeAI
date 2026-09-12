@@ -38,10 +38,13 @@ interface ProviderConfig {
   apiKey: string;
 }
 
+const DEFAULT_AI_MODEL = 'gemini-3.8-flash';
+const DEFAULT_IMAGE_MODEL = 'gpt-image-2.5';
+
 const PROVIDER_DEFAULTS: Record<AIProvider, ProviderConfig> = {
-  openai: { baseURL: 'https://api.deepseek.com', model: '', imageModel: '', apiKey: '' },
+  openai: { baseURL: 'https://api.deepseek.com', model: DEFAULT_AI_MODEL, imageModel: DEFAULT_IMAGE_MODEL, apiKey: '' },
   anthropic: { baseURL: 'https://api.anthropic.com', model: '', imageModel: '', apiKey: '' },
-  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: '', imageModel: '', apiKey: '' },
+  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta', model: DEFAULT_AI_MODEL, imageModel: '', apiKey: '' },
 };
 
 function loadProviderConfigs(): Partial<Record<AIProvider, ProviderConfig>> {
@@ -163,8 +166,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   aiProvider: 'openai',
   aiApiKey: '',
   aiBaseURL: 'https://api.deepseek.com',
-  aiModel: '',
-  aiImageModel: '',
+  aiModel: DEFAULT_AI_MODEL,
+  aiImageModel: DEFAULT_IMAGE_MODEL,
   autoSave: true,
   autoSaveInterval: 500,
   _hydrated: false,
@@ -242,18 +245,16 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         const data = await res.json();
         // Backward compat: map legacy 'custom' provider to 'openai'
         const provider = (data.aiProvider === 'custom' || data.aiProvider === 'azure') ? 'openai' : data.aiProvider;
-        const cachedProvider = provider ? loadProviderConfigs()[provider as AIProvider] : undefined;
-        const cachedProviderKey = cachedProvider?.apiKey || (provider === get().aiProvider ? apiKey : '');
+        const activeProvider = (provider || get().aiProvider) as AIProvider;
+        const providerDefaults = PROVIDER_DEFAULTS[activeProvider];
+        const cachedProvider = loadProviderConfigs()[activeProvider];
+        const cachedProviderKey = cachedProvider?.apiKey || (activeProvider === get().aiProvider ? apiKey : '');
         set({
           ...(provider && { aiProvider: provider }),
           aiApiKey: cachedProviderKey,
-          ...(data.aiBaseURL && { aiBaseURL: data.aiBaseURL }),
-          ...(data.aiModel && { aiModel: data.aiModel }),
-          ...(typeof data.aiImageModel === 'string'
-            ? { aiImageModel: data.aiImageModel }
-            : cachedProvider?.imageModel
-              ? { aiImageModel: cachedProvider.imageModel }
-              : {}),
+          aiBaseURL: data.aiBaseURL || cachedProvider?.baseURL || providerDefaults.baseURL,
+          aiModel: data.aiModel || cachedProvider?.model || providerDefaults.model,
+          aiImageModel: data.aiImageModel || cachedProvider?.imageModel || providerDefaults.imageModel || '',
           ...(typeof data.autoSave === 'boolean' && { autoSave: data.autoSave }),
           ...(typeof data.autoSaveInterval === 'number' && { autoSaveInterval: data.autoSaveInterval }),
           _hydrated: true,
