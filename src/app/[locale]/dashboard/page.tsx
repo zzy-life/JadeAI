@@ -125,6 +125,10 @@ export default function DashboardPage() {
     return result;
   }, [resumes, searchQuery, sortOption]);
 
+  const sourceTitleById = useMemo(
+    () => new Map(resumes.map((resume) => [resume.id, resume.title])),
+    [resumes],
+  );
   const hasResumes = resumes.length > 0;
   const hasResults = filteredResumes.length > 0;
 
@@ -256,6 +260,7 @@ export default function DashboardPage() {
       ) : viewMode === 'grid' ? (
         <ResumeGrid
           resumes={filteredResumes}
+          sourceTitleById={sourceTitleById}
           onDelete={deleteResume}
           onDuplicate={duplicateResume}
           onRename={renameResume}
@@ -267,6 +272,7 @@ export default function DashboardPage() {
             <ResumeListItem
               key={resume.id}
               resume={resume}
+              sourceTitle={resume.sourceResumeId ? sourceTitleById.get(resume.sourceResumeId) : undefined}
               onDelete={() => deleteResume(resume.id)}
               onDuplicate={() => duplicateResume(resume.id)}
               onRename={(title) => renameResume(resume.id, title)}

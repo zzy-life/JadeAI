@@ -184,6 +184,9 @@ export interface Resume {
   themeConfig: ThemeConfig;
   isDefault: boolean;
   language: string;
+  kind: 'standard' | 'jd_optimized';
+  sourceResumeId: string | null;
+  targetJobDescription: string | null;
   sections: ResumeSection[];
   createdAt: Date;
   updatedAt: Date;

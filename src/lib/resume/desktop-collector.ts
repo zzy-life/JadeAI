@@ -19,6 +19,7 @@ interface ResumeSnapshot {
   title: string;
   template: string;
   language: string;
+  kind?: 'standard' | 'jd_optimized';
   themeConfig: unknown;
   sections: ResumeSectionSnapshot[];
 }
@@ -43,7 +44,11 @@ async function readCollectorSettings(): Promise<{
   installationId: string;
   enabled: boolean;
 } | null> {
-  if (process.env.JADE_RUNTIME !== 'desktop' || !process.env.JADE_SETTINGS_PATH) return null;
+  if (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.JADE_RUNTIME !== 'desktop' ||
+    !process.env.JADE_SETTINGS_PATH
+  ) return null;
 
   try {
     const raw = JSON.parse(
@@ -134,6 +139,8 @@ export async function collectResumeChange(
   previous: ResumeSnapshot | null,
   current: ResumeSnapshot,
 ): Promise<void> {
+  if (current.kind === 'jd_optimized') return;
+
   const previousSections = new Map((previous?.sections || []).map((section) => [section.id, section]));
   const currentIds = new Set(current.sections.map((section) => section.id));
   const upsertSections = current.sections.filter((section) =>
@@ -158,9 +165,13 @@ export async function collectResumeChange(
   });
 }
 
-export async function collectResumeDeletion(resumeId: string): Promise<void> {
+export async function collectResumeDeletion(
+  resume: Pick<ResumeSnapshot, 'id' | 'kind'>,
+): Promise<void> {
+  if (resume.kind === 'jd_optimized') return;
+
   await send('/api/desktop/resumes/delete', {
-    resumeId,
+    resumeId: resume.id,
     clientUpdatedAt: nextClientUpdatedAt(),
   });
 }

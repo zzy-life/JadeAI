@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { TEMPLATES } from '@/lib/constants';
 import { useResume } from '@/hooks/use-resume';
-import { Link, useRouter } from '@/i18n/routing';
+import { useRouter } from '@/i18n/routing';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { ResumePreview } from '@/components/preview/resume-preview';
 import { TourOverlay, type TourStepConfig } from '@/components/tour/tour-overlay';
@@ -253,13 +253,6 @@ export default function TemplatesPage() {
   return (
     <div>
       <div className="mb-8">
-        <Link
-          href="/dashboard"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('common.back')}
-        </Link>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-foreground">
           {t('templates.title')}
         </h1>

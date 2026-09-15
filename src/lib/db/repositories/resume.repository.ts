@@ -1,6 +1,37 @@
 import { eq, desc, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { resumes, resumeSections } from '../schema';
+import { resolveDatabaseKind } from '../database-kind';
+
+interface JdOptimizedSection {
+  type: string;
+  title: string;
+  sortOrder: number;
+  visible: boolean;
+  content: unknown;
+}
+
+async function insertResumeWithSections(
+  resumeValues: typeof resumes.$inferInsert,
+  sectionValues: (typeof resumeSections.$inferInsert)[],
+) {
+  if (resolveDatabaseKind(process.env) === 'sqlite') {
+    db.transaction((tx: typeof db) => {
+      tx.insert(resumes).values(resumeValues).run();
+      if (sectionValues.length > 0) {
+        tx.insert(resumeSections).values(sectionValues).run();
+      }
+    });
+    return;
+  }
+
+  await db.transaction(async (tx: typeof db) => {
+    await tx.insert(resumes).values(resumeValues);
+    if (sectionValues.length > 0) {
+      await tx.insert(resumeSections).values(sectionValues);
+    }
+  });
+}
 
 export const resumeRepository = {
   async findAllByUserId(userId: string) {
@@ -14,13 +45,14 @@ export const resumeRepository = {
     return { ...resume[0], sections };
   },
 
-  async create(data: { userId: string; title?: string; template?: string; language?: string }) {
+  async create(data: { userId: string; title?: string; template?: string; themeConfig?: unknown; language?: string }) {
     const id = crypto.randomUUID();
     await db.insert(resumes).values({
       id,
       userId: data.userId,
       title: data.title || '未命名简历',
       template: data.template || 'classic',
+      themeConfig: data.themeConfig,
       language: data.language || 'zh',
     });
     return this.findById(id);
@@ -28,6 +60,44 @@ export const resumeRepository = {
 
   async update(id: string, data: Partial<{ title: string; template: string; themeConfig: unknown; language: string }>) {
     await db.update(resumes).set({ ...data, updatedAt: new Date() } as any).where(eq(resumes.id, id));
+    return this.findById(id);
+  },
+
+  async createJdOptimized(data: {
+    userId: string;
+    title: string;
+    template: string;
+    themeConfig: unknown;
+    language: string;
+    sourceResumeId: string;
+    targetJobDescription: string;
+    sections: JdOptimizedSection[];
+  }) {
+    const id = crypto.randomUUID();
+
+    await insertResumeWithSections(
+      {
+        id,
+        userId: data.userId,
+        title: data.title,
+        template: data.template,
+        themeConfig: data.themeConfig,
+        language: data.language,
+        kind: 'jd_optimized',
+        sourceResumeId: data.sourceResumeId,
+        targetJobDescription: data.targetJobDescription,
+      },
+      data.sections.map((section) => ({
+        id: crypto.randomUUID(),
+        resumeId: id,
+        type: section.type,
+        title: section.title,
+        sortOrder: section.sortOrder,
+        visible: section.visible,
+        content: section.content,
+      })),
+    );
+
     return this.findById(id);
   },
 
@@ -40,17 +110,19 @@ export const resumeRepository = {
     if (!original) return null;
 
     const newId = crypto.randomUUID();
-    await db.insert(resumes).values({
-      id: newId,
-      userId,
-      title: titleOverride ?? `${original.title} (副本)`,
-      template: original.template,
-      themeConfig: original.themeConfig,
-      language: original.language,
-    });
-
-    for (const section of original.sections) {
-      await db.insert(resumeSections).values({
+    await insertResumeWithSections(
+      {
+        id: newId,
+        userId,
+        title: titleOverride ?? `${original.title} (副本)`,
+        template: original.template,
+        themeConfig: original.themeConfig,
+        language: original.language,
+        kind: original.kind,
+        sourceResumeId: original.sourceResumeId,
+        targetJobDescription: original.targetJobDescription,
+      },
+      original.sections.map((section: JdOptimizedSection) => ({
         id: crypto.randomUUID(),
         resumeId: newId,
         type: section.type,
@@ -58,8 +130,8 @@ export const resumeRepository = {
         sortOrder: section.sortOrder,
         visible: section.visible,
         content: section.content,
-      });
-    }
+      })),
+    );
 
     return this.findById(newId);
   },

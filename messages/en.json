@@ -128,7 +128,7 @@
       "save": "Save",
       "exportPdf": "Export",
       "exporting": "Exporting...",
-      "jdAnalysis": "JD Match",
+      "jdAnalysis": "JD Match & Optimize",
       "translate": "Translate",
       "coverLetter": "Cover Letter",
       "grammarCheck": "Grammar",
@@ -367,8 +367,8 @@
     }
   },
   "jdAnalysis": {
-    "title": "JD Match Analysis",
-    "description": "Paste a job description to analyze how well your resume matches",
+    "title": "JD Match & Optimize",
+    "description": "Analyze the match and generate a separate tailored resume from your main resume",
     "placeholder": "Paste the job description here...",
     "analyze": "Analyze Match",
     "analyzing": "Analyzing...",
@@ -382,9 +382,19 @@
     "suggestions": "Suggestions",
     "currentState": "Current",
     "suggestedChange": "Suggested",
-    "optimize": "Optimize Resume",
-    "optimizeCopy": "Copy & Optimize",
-    "copyOptimizeError": "Failed to duplicate resume, please try again",
+    "optimize": "Generate Tailored Resume",
+    "optimizing": "Generating tailored resume...",
+    "optimizingTitle": "AI is reshaping your resume",
+    "optimizingDescription": "Adjusting emphasis, matching supported keywords, and validating factual accuracy for this role.",
+    "optimizingStepAnalyze": "Reading job requirements",
+    "optimizingStepTailor": "Tailoring resume content",
+    "optimizingStepValidate": "Validating facts and structure",
+    "mainResumeProtected": "Your main resume stays unchanged",
+    "resultTitle": "AI optimization complete",
+    "resultDescription": "The following changes were made for “{role}”:",
+    "openOptimizedResume": "Open tailored resume",
+    "optimizeSuccess": "Tailored resume generated",
+    "optimizeError": "Failed to generate the tailored resume. Please try again.",
     "pasteJd": "Paste a job description to get started",
     "noResults": "No analysis results available",
     "newAnalysis": "New Analysis",
@@ -397,6 +407,14 @@
     "viewDetail": "View Details",
     "loadingHistory": "Loading history...",
     "jobDescriptionLabel": "Job Description"
+  },
+  "jdDerivedResume": {
+    "badge": "JD Optimized",
+    "editorNotice": "This is a derived resume; your main resume is not modified or reported",
+    "title": "Target Job Details",
+    "description": "This resume was generated separately from your main resume for the following job description.",
+    "sourceLabel": "Source resume: ",
+    "sourceUnavailable": "Source resume deleted"
   },
   "translate": {
     "title": "AI Resume Translation",
@@ -678,8 +696,8 @@
         "description": "Create resumes in multiple languages and translate between them instantly with AI assistance."
       },
       "jdMatch": {
-        "title": "JD Match Analysis",
-        "description": "Paste a job description and get an instant match score with actionable suggestions to improve your resume."
+        "title": "JD Match & Optimize",
+        "description": "Analyze a job description and generate a separate tailored resume that you can manage and download without changing your main resume."
       },
       "mockInterview": {
         "title": "Mock Interview",

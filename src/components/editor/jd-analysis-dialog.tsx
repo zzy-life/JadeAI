@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { useRouter } from '@/i18n/routing';
 import {
   Loader2, RotateCcw, Target, ShieldCheck, Lightbulb, AlertTriangle,
-  Wand2, Copy, Trash2, FileSearch, ArrowUp, ArrowDown, Minus, ChevronLeft,
-  Briefcase, ChevronDown,
+  Wand2, Trash2, FileSearch, ArrowUp, ArrowDown, Minus, ChevronLeft,
+  Briefcase, ChevronDown, CheckCircle2, FileText,
 } from 'lucide-react';
 import {
   Dialog,
@@ -30,10 +30,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { useEditorStore } from '@/stores/editor-store';
 import { useResumeStore } from '@/stores/resume-store';
 import { getAIHeaders } from '@/stores/settings-store';
-import { setPendingOptimizeMessage } from '@/lib/pending-optimize';
+import { MAX_JOB_DESCRIPTION_LENGTH } from '@/lib/ai/jd-analysis-schema';
 
 interface JdAnalysisResult {
   overallScore: number;
@@ -42,6 +41,12 @@ interface JdAnalysisResult {
   suggestions: { section: string; current: string; suggested: string }[];
   atsScore: number;
   summary: string;
+}
+
+interface OptimizationResult {
+  resumeId: string;
+  targetRole: string;
+  changes: { section: string; summary: string }[];
 }
 
 interface HistoryItem {
@@ -110,6 +115,109 @@ function ScoreCircle({ score, label, size = 'lg' }: { score: number; label: stri
         </div>
       </div>
       {!isSm && <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</span>}
+    </div>
+  );
+}
+
+function JdOptimizeProgress({ t }: { t: any }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-10">
+      <div className="relative mb-7 h-48 w-36 overflow-hidden rounded-xl border border-brand/20 bg-white shadow-[0_24px_70px_-28px_rgba(59,130,246,0.55)] dark:bg-zinc-900">
+        <div className="space-y-3 p-5">
+          <div className="h-2 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          <div className="h-1.5 w-24 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+          <div className="mt-5 h-1.5 w-full rounded-full bg-brand/20" />
+          <div className="h-1.5 w-5/6 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
+          <div className="mt-4 h-1.5 w-3/4 rounded-full bg-brand/20" />
+          <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-1.5 w-4/5 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+        </div>
+        <div className="absolute inset-x-0 top-0 h-16 animate-[jd-scan_2.2s_ease-in-out_infinite] border-b border-brand/60 bg-gradient-to-b from-transparent via-brand/15 to-brand/30 motion-reduce:animate-none" />
+        <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30">
+          <Wand2 className="h-4 w-4 animate-pulse motion-reduce:animate-none" />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t('optimizingTitle')}</h3>
+      <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+        {t('optimizingDescription')}
+      </p>
+
+      <div className="mt-7 grid w-full max-w-lg grid-cols-3 gap-3">
+        {[
+          [FileText, 'optimizingStepAnalyze'],
+          [Target, 'optimizingStepTailor'],
+          [CheckCircle2, 'optimizingStepValidate'],
+        ].map(([Icon, key], index) => {
+          const StepIcon = Icon as typeof FileText;
+          return (
+            <div
+              key={key as string}
+              className="flex flex-col items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50/70 px-2 py-3 text-center dark:border-zinc-800 dark:bg-zinc-900/70"
+              style={{ animation: `pulse 1.8s ease-in-out ${index * 0.3}s infinite` }}
+            >
+              <StepIcon className="h-4 w-4 text-brand" />
+              <span className="text-xs text-zinc-600 dark:text-zinc-300">{t(key as string)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        {t('mainResumeProtected')}
+      </div>
+      <style jsx>{`
+        @keyframes jd-scan {
+          0%, 100% { transform: translateY(-4rem); opacity: 0.35; }
+          50% { transform: translateY(12rem); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function JdOptimizeResult({ result, t, onOpen }: { result: OptimizationResult; t: any; onOpen: () => void }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex-1 overflow-y-auto px-6 py-7">
+        <div className="mx-auto max-w-lg">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <h3 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{t('resultTitle')}</h3>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            {t('resultDescription', { role: result.targetRole })}
+          </p>
+
+          <div className="mt-6 space-y-3">
+            {result.changes.map((change, index) => (
+              <div key={`${change.section}-${index}`} className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand">
+                    {index + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{change.section}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{change.summary}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            {t('mainResumeProtected')}
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-end border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+        <Button onClick={onOpen} className="cursor-pointer gap-1.5 bg-brand hover:bg-brand-hover">
+          {t('openOptimizedResume')}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -271,12 +379,12 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
   const t = useTranslations('jdAnalysis');
   const ct = useTranslations('common');
   const router = useRouter();
-  const { setShowAiChat, setPendingAiMessage } = useEditorStore();
   const [jobDescription, setJobDescription] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<JdAnalysisResult | null>(null);
   const [error, setError] = useState('');
-  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
 
   // History state
   const [activeTab, setActiveTab] = useState<string>('new');
@@ -362,57 +470,42 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
       setActiveTab('new');
       setHistoryDetail(null);
       setHistoryDetailJd('');
+      setOptimizationResult(null);
     }, 200);
   };
 
-  const buildOptimizeMessage = (r: JdAnalysisResult) => {
-    const parts: string[] = [];
-    if (r.missingKeywords.length > 0) {
-      parts.push(`缺失关键词：${r.missingKeywords.join('、')}`);
-    }
-    if (r.suggestions.length > 0) {
-      const list = r.suggestions
-        .map((s, i) => `${i + 1}. [${s.section}] "${s.current}" → "${s.suggested}"`)
-        .join('\n');
-      parts.push(`优化建议：\n${list}`);
-    }
-    return `请根据以下 JD 匹配分析结果优化简历，使其更匹配目标职位：\n\n${parts.join('\n\n')}\n\n请使用工具直接修改对应的简历模块内容，尽量自然地融入缺失关键词。`;
-  };
-
-  const handleOptimize = () => {
-    if (!result) return;
-    const message = buildOptimizeMessage(result);
-    onOpenChange(false);
-    setTimeout(() => {
-      setPendingAiMessage(message);
-      setShowAiChat(true);
-    }, 300);
-  };
-
-  const handleOptimizeCopy = async () => {
-    if (!result || isDuplicating) return;
-    const message = buildOptimizeMessage(result);
-    setIsDuplicating(true);
+  const handleOptimize = async (targetJd: string, targetAnalysis: JdAnalysisResult | null) => {
+    if (!targetJd.trim() || !targetAnalysis || isOptimizing) return;
+    setIsOptimizing(true);
+    setError('');
     try {
-      const res = await fetch(`/api/resume/${resumeId}/duplicate`, {
+      await useResumeStore.getState().flushSave();
+      const res = await fetch('/api/ai/jd-analysis/optimize', {
         method: 'POST',
         headers: getAuthHeaders(),
+        body: JSON.stringify({
+          resumeId,
+          jobDescription: targetJd,
+          analysis: targetAnalysis,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to duplicate resume');
-      const duplicated = await res.json();
-      setPendingOptimizeMessage(duplicated.id, message);
-      onOpenChange(false);
-      setTimeout(() => {
-        setResult(null);
-        setJobDescription('');
-        setError('');
-        setActiveTab('new');
-      }, 200);
-      router.push(`/editor/${duplicated.id}`);
-    } catch {
-      toast.error(t('copyOptimizeError'));
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t('optimizeError'));
+      }
+      const optimized = await res.json();
+      setOptimizationResult({
+        resumeId: optimized.id,
+        targetRole: optimized.targetRole,
+        changes: optimized.optimizationSummary || [],
+      });
+      toast.success(t('optimizeSuccess'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('optimizeError');
+      setError(message);
+      toast.error(t('optimizeError'));
     } finally {
-      setIsDuplicating(false);
+      setIsOptimizing(false);
     }
   };
 
@@ -433,11 +526,26 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
-        </DialogHeader>
+        {!isOptimizing && !optimizationResult && (
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle>{t('title')}</DialogTitle>
+            <DialogDescription>{t('description')}</DialogDescription>
+          </DialogHeader>
+        )}
 
+        {isOptimizing ? (
+          <JdOptimizeProgress t={t} />
+        ) : optimizationResult ? (
+          <JdOptimizeResult
+            result={optimizationResult}
+            t={t}
+            onOpen={() => {
+              const targetId = optimizationResult.resumeId;
+              handleClose();
+              router.push(`/editor/${targetId}`);
+            }}
+          />
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0 min-h-0 flex-1">
           <div className="px-6 pt-3">
             <TabsList className="w-full">
@@ -463,6 +571,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                   placeholder={t('placeholder')}
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
+                  maxLength={MAX_JOB_DESCRIPTION_LENGTH}
                   rows={6}
                   className="h-[200px] max-h-[200px] overflow-y-auto resize-none text-sm"
                   disabled={isAnalyzing}
@@ -508,27 +617,18 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                     <RotateCcw className="h-3.5 w-3.5" />
                     {t('analyzeAgain')}
                   </Button>
-                  {(result.suggestions.length > 0 || result.missingKeywords.length > 0) && (
-                    <>
-                      <Button
-                        variant="outline"
-                        onClick={handleOptimizeCopy}
-                        disabled={isDuplicating}
-                        className="cursor-pointer gap-1.5"
-                      >
-                        {isDuplicating ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                        {t('optimizeCopy')}
-                      </Button>
-                      <Button onClick={handleOptimize} className="cursor-pointer gap-1.5 bg-brand hover:bg-brand-hover">
-                        <Wand2 className="h-3.5 w-3.5" />
-                        {t('optimize')}
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    onClick={() => handleOptimize(jobDescription, result)}
+                    disabled={isOptimizing}
+                    className="cursor-pointer gap-1.5 bg-brand hover:bg-brand-hover"
+                  >
+                    {isOptimizing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3.5 w-3.5" />
+                    )}
+                    {isOptimizing ? t('optimizing') : t('optimize')}
+                  </Button>
                 </div>
               </>
             )}
@@ -556,6 +656,18 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                 <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
+                  </Button>
+                  <Button
+                    onClick={() => handleOptimize(historyDetailJd, historyDetail)}
+                    disabled={isOptimizing}
+                    className="cursor-pointer gap-1.5 bg-brand hover:bg-brand-hover"
+                  >
+                    {isOptimizing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3.5 w-3.5" />
+                    )}
+                    {isOptimizing ? t('optimizing') : t('optimize')}
                   </Button>
                 </div>
               </>
@@ -650,6 +762,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
             )}
           </TabsContent>
         </Tabs>
+        )}
       </DialogContent>
     </Dialog>
 

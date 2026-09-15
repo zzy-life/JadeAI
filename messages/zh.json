@@ -128,7 +128,7 @@
       "save": "保存",
       "exportPdf": "导出",
       "exporting": "导出中...",
-      "jdAnalysis": "JD 匹配",
+      "jdAnalysis": "JD 匹配优化",
       "translate": "翻译",
       "coverLetter": "求职信",
       "grammarCheck": "语法检查",
@@ -367,8 +367,8 @@
     }
   },
   "jdAnalysis": {
-    "title": "JD 匹配分析",
-    "description": "粘贴目标职位描述，分析简历匹配度",
+    "title": "JD 匹配优化",
+    "description": "分析匹配度，并基于主简历生成独立的针对性简历",
     "placeholder": "在此粘贴职位描述...",
     "analyze": "开始分析",
     "analyzing": "分析中...",
@@ -382,9 +382,19 @@
     "suggestions": "优化建议",
     "currentState": "当前",
     "suggestedChange": "建议",
-    "optimize": "一键优化",
-    "optimizeCopy": "复制优化",
-    "copyOptimizeError": "复制简历失败，请重试",
+    "optimize": "生成 JD 优化简历",
+    "optimizing": "正在生成优化简历...",
+    "optimizingTitle": "AI 正在重塑这份简历",
+    "optimizingDescription": "正在根据职位要求调整表达重点、匹配关键词并检查内容真实性，请稍候。",
+    "optimizingStepAnalyze": "读取职位要求",
+    "optimizingStepTailor": "针对性优化内容",
+    "optimizingStepValidate": "校验事实与结构",
+    "mainResumeProtected": "主简历保持不变",
+    "resultTitle": "AI 优化已完成",
+    "resultDescription": "已针对“{role}”完成以下调整：",
+    "openOptimizedResume": "打开优化简历",
+    "optimizeSuccess": "JD 优化简历已生成",
+    "optimizeError": "生成 JD 优化简历失败，请重试",
     "pasteJd": "粘贴职位描述以开始分析",
     "noResults": "暂无分析结果",
     "newAnalysis": "新分析",
@@ -397,6 +407,14 @@
     "viewDetail": "查看详情",
     "loadingHistory": "加载历史...",
     "jobDescriptionLabel": "职位描述"
+  },
+  "jdDerivedResume": {
+    "badge": "JD 优化",
+    "editorNotice": "当前为派生简历，不会修改主简历",
+    "title": "目标职位详情",
+    "description": "这份简历根据以下职位描述从主简历独立生成。",
+    "sourceLabel": "来源主简历：",
+    "sourceUnavailable": "原简历已删除"
   },
   "translate": {
     "title": "AI 简历翻译",
@@ -678,8 +696,8 @@
         "description": "支持多语种简历创建，AI 一键翻译，轻松投递海内外岗位。"
       },
       "jdMatch": {
-        "title": "JD 匹配",
-        "description": "粘贴职位描述，即刻获取匹配评分和优化建议，精准提升简历竞争力。"
+        "title": "JD 匹配优化",
+        "description": "粘贴职位描述，获取匹配分析，并基于主简历生成独立、可管理和下载的针对性简历。"
       },
       "mockInterview": {
         "title": "模拟面试",

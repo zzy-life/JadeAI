@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { TemplateThumbnail } from './template-thumbnail';
 import { templateLabelsMap as templateLabelKeys } from '@/lib/template-labels';
+import { JdDerivedResumeNotice } from '@/components/resume/jd-derived-resume-notice';
 import type { Resume } from '@/types/resume';
 
 interface ResumeCardProps {
@@ -21,9 +22,10 @@ interface ResumeCardProps {
   onDuplicate: () => void;
   onRename: (title: string) => void;
   onShare?: () => void;
+  sourceTitle?: string;
 }
 
-export function ResumeCard({ resume, onDelete, onDuplicate, onRename, onShare }: ResumeCardProps) {
+export function ResumeCard({ resume, onDelete, onDuplicate, onRename, onShare, sourceTitle }: ResumeCardProps) {
   const t = useTranslations();
   const router = useRouter();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -120,10 +122,18 @@ export function ResumeCard({ resume, onDelete, onDuplicate, onRename, onShare }:
                 {resume.title}
               </h3>
             )}
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
-                {templateLabel}
-              </Badge>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <div className="grid auto-cols-fr grid-flow-col items-center gap-1.5">
+                <Badge variant="secondary" className="h-5 w-full px-1.5 py-0 text-[11px]">
+                  {templateLabel}
+                </Badge>
+                {resume.kind === 'jd_optimized' && resume.targetJobDescription && (
+                  <JdDerivedResumeNotice
+                    jobDescription={resume.targetJobDescription}
+                    sourceTitle={sourceTitle}
+                  />
+                )}
+              </div>
               <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
                 {resume.updatedAt
                   ? t('dashboard.lastEdited', {
@@ -132,6 +142,12 @@ export function ResumeCard({ resume, onDelete, onDuplicate, onRename, onShare }:
                   : ''}
               </span>
             </div>
+            {resume.kind === 'jd_optimized' && (
+              <p className="mt-1 truncate text-[11px] text-amber-700 dark:text-amber-400">
+                {t('jdDerivedResume.sourceLabel')}
+                {sourceTitle || t('jdDerivedResume.sourceUnavailable')}
+              </p>
+            )}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger

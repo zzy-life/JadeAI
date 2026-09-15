@@ -9,15 +9,19 @@ interface ResumeGridProps {
   onDuplicate: (id: string) => Promise<Resume | null>;
   onRename: (id: string, title: string) => Promise<boolean>;
   onShare?: (id: string) => void;
+  sourceTitleById?: Map<string, string>;
 }
 
-export function ResumeGrid({ resumes, onDelete, onDuplicate, onRename, onShare }: ResumeGridProps) {
+export function ResumeGrid({ resumes, onDelete, onDuplicate, onRename, onShare, sourceTitleById }: ResumeGridProps) {
+  const titleById = sourceTitleById ?? new Map(resumes.map((resume) => [resume.id, resume.title]));
+
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {resumes.map((resume) => (
         <ResumeCard
           key={resume.id}
           resume={resume}
+          sourceTitle={resume.sourceResumeId ? titleById.get(resume.sourceResumeId) : undefined}
           onDelete={() => onDelete(resume.id)}
           onDuplicate={() => onDuplicate(resume.id)}
           onRename={(title) => onRename(resume.id, title)}

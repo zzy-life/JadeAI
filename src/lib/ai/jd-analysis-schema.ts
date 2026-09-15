@@ -1,9 +1,11 @@
 import { z } from 'zod/v4';
 
 // Input schema for JD analysis API
+export const MAX_JOB_DESCRIPTION_LENGTH = 20_000;
+
 export const jdAnalysisInputSchema = z.object({
   resumeId: z.string().describe('The ID of the resume to analyze'),
-  jobDescription: z.string().min(1).describe('The job description text to match against'),
+  jobDescription: z.string().trim().min(1).max(MAX_JOB_DESCRIPTION_LENGTH).describe('The job description text to match against'),
 });
 
 export type JdAnalysisInput = z.infer<typeof jdAnalysisInputSchema>;
@@ -26,3 +28,19 @@ export const jdAnalysisOutputSchema = z.object({
 });
 
 export type JdAnalysisOutput = z.infer<typeof jdAnalysisOutputSchema>;
+
+export const jdOptimizeInputSchema = jdAnalysisInputSchema.extend({
+  analysis: jdAnalysisOutputSchema,
+});
+
+export const jdOptimizeOutputSchema = z.object({
+  targetRole: z.string().min(1).max(100),
+  sections: z.array(z.object({
+    sectionId: z.string(),
+    title: z.string(),
+    changeSummary: z.string().min(1).max(500),
+    content: z.any(),
+  })),
+});
+
+export type JdOptimizeOutput = z.infer<typeof jdOptimizeOutputSchema>;

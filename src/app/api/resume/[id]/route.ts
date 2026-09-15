@@ -134,7 +134,7 @@ export async function DELETE(
     }
 
     await resumeRepository.delete(id);
-    void collectResumeDeletion(id);
+    void collectResumeDeletion(resume);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('DELETE /api/resume/[id] error:', error);

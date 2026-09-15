@@ -27,8 +27,8 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useTourStore, hasCompletedTour } from '@/stores/tour-store';
-import { takePendingOptimizeMessage } from '@/lib/pending-optimize';
 import { Skeleton } from '@/components/ui/skeleton';
+import { JdDerivedResumeNotice } from '@/components/resume/jd-derived-resume-notice';
 import { cn } from '@/lib/utils';
 
 const EDITOR_TOUR_STEPS: TourStepConfig[] = [
@@ -45,7 +45,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { resume, sections, updateSection, addSection, removeSection, reorderSections } = useEditor(id);
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { showThemeEditor, mobileActiveTab, setPendingAiMessage, setShowAiChat } = useEditorStore();
+  const { showThemeEditor, mobileActiveTab } = useEditorStore();
   const { activeModal, openModal, closeModal } = useUIStore();
   const { hydrate, _hydrated } = useSettingsStore();
   const startTour = useTourStore((s) => s.startTour);
@@ -80,17 +80,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     return () => clearTimeout(timer);
   }, [resume, startTour]);
 
-  // Consume a copy-optimize message handed off via pending-optimize.ts (gated
-  // on resume.id === id so it runs after useEditor's cleanup for the old id).
-  useEffect(() => {
-    if (!resume || resume.id !== id) return;
-    const message = takePendingOptimizeMessage(id);
-    if (message) {
-      setPendingAiMessage(message);
-      setShowAiChat(true);
-    }
-  }, [resume, id, setPendingAiMessage, setShowAiChat]);
-
   if (fpLoading || !resume) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -106,6 +95,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   return (
     <div className="flex h-screen flex-col">
       <EditorToolbar resumeId={id} />
+      {resume.kind === 'jd_optimized' && resume.targetJobDescription && (
+        <JdDerivedResumeNotice
+          variant="banner"
+          jobDescription={resume.targetJobDescription}
+        />
+      )}
       <EditorMobileTabBar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -170,7 +165,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       <JdAnalysisDialog
         open={activeModal === 'jd-analysis'}
         onOpenChange={(open) => open ? openModal('jd-analysis') : closeModal()}
-        resumeId={id}
+        resumeId={resume.kind === 'jd_optimized' && resume.sourceResumeId ? resume.sourceResumeId : id}
       />
       <TranslateDialog
         open={activeModal === 'translate'}

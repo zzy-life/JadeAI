@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { templateLabelsMap as templateLabelKeys } from '@/lib/template-labels';
+import { JdDerivedResumeNotice } from '@/components/resume/jd-derived-resume-notice';
 import type { Resume } from '@/types/resume';
 
 interface ResumeListItemProps {
@@ -19,9 +20,10 @@ interface ResumeListItemProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onRename: (title: string) => void;
+  sourceTitle?: string;
 }
 
-export function ResumeListItem({ resume, onDelete, onDuplicate, onRename }: ResumeListItemProps) {
+export function ResumeListItem({ resume, onDelete, onDuplicate, onRename, sourceTitle }: ResumeListItemProps) {
   const t = useTranslations();
   const router = useRouter();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -108,9 +110,23 @@ export function ResumeListItem({ resume, onDelete, onDuplicate, onRename }: Resu
       </div>
 
       {/* Template badge */}
-      <Badge variant="secondary" className="shrink-0 text-[11px] px-1.5 py-0">
-        {templateLabel}
-      </Badge>
+      <div className="grid shrink-0 auto-cols-fr grid-flow-col items-center gap-1.5">
+        <Badge variant="secondary" className="h-5 w-full px-1.5 py-0 text-[11px]">
+          {templateLabel}
+        </Badge>
+        {resume.kind === 'jd_optimized' && resume.targetJobDescription && (
+          <JdDerivedResumeNotice
+            jobDescription={resume.targetJobDescription}
+            sourceTitle={sourceTitle}
+          />
+        )}
+      </div>
+      {resume.kind === 'jd_optimized' && resume.targetJobDescription && (
+        <span className="hidden max-w-48 shrink-0 truncate text-[11px] text-amber-700 md:inline dark:text-amber-400">
+          {t('jdDerivedResume.sourceLabel')}
+          {sourceTitle || t('jdDerivedResume.sourceUnavailable')}
+        </span>
+      )}
 
       {/* Last edited */}
       <span className="hidden shrink-0 text-[12px] text-zinc-400 sm:inline dark:text-zinc-500">
