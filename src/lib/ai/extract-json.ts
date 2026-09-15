@@ -13,6 +13,45 @@ import type { ZodType } from 'zod/v4';
  * non-whitespace character is a JSON structural char (, } ] :) or EOF,
  * it's a real closing quote; otherwise escape it.
  */
+function repairUnescapedControlCharacters(text: string): string {
+  const out: string[] = [];
+  let inString = false;
+  let escaped = false;
+
+  for (const ch of text) {
+    if (escaped) {
+      out.push(ch);
+      escaped = false;
+      continue;
+    }
+    if (inString && ch === '\\') {
+      out.push(ch);
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      out.push(ch);
+      continue;
+    }
+    if (inString && ch === '\n') {
+      out.push('\\n');
+      continue;
+    }
+    if (inString && ch === '\r') {
+      out.push('\\r');
+      continue;
+    }
+    if (inString && ch === '\t') {
+      out.push('\\t');
+      continue;
+    }
+    out.push(ch);
+  }
+
+  return out.join('');
+}
+
 function repairUnescapedQuotes(text: string): string {
   const len = text.length;
   const out: string[] = [];
@@ -138,8 +177,8 @@ export function extractJson<T>(text: string, schema: ZodType<T>): T {
   const direct = tryParse(cleaned, schema);
   if (direct !== null) return direct;
 
-  // Step 3: Repair unescaped quotes then parse
-  const repaired = repairUnescapedQuotes(cleaned);
+  // Step 3: Repair control characters and unescaped quotes then parse
+  const repaired = repairUnescapedQuotes(repairUnescapedControlCharacters(cleaned));
   const afterRepair = tryParse(repaired, schema);
   if (afterRepair !== null) return afterRepair;
 

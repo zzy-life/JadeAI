@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recruitRepository } from '@/lib/db/repositories/recruit.repository';
-import { createCandidateInputSchema } from '@/lib/ai/recruit-schema';
+import { createCandidateInputSchema, UNNAMED_CANDIDATE_NAME } from '@/lib/ai/recruit-schema';
 import { requireOwnedJob } from '@/lib/recruit/access';
+
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const candidate = await recruitRepository.createCandidate({
     jobId: id,
-    name: parsed.data.name,
+    name: parsed.data.name || UNNAMED_CANDIDATE_NAME,
   });
   return NextResponse.json({ candidate }, { status: 201 });
 }

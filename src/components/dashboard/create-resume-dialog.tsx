@@ -16,8 +16,9 @@ import { TEMPLATES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { getAIHeaders, hasCompleteAIConfig, useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
-import { Upload, FileText, Image, X, Loader2, Check, AlertCircle } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { TemplateThumbnail } from './template-thumbnail';
+import { ResumeFileUpload } from '@/components/resume/resume-file-upload';
 import { templateLabelsMap } from '@/lib/template-labels';
 
 interface CreateResumeDialogProps {
@@ -27,8 +28,6 @@ interface CreateResumeDialogProps {
 }
 
 type Tab = 'template' | 'upload';
-
-const ACCEPTED_EXTENSIONS = '.pdf,.png,.jpg,.jpeg,.webp';
 
 export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDialogProps) {
   const t = useTranslations();
@@ -49,8 +48,6 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const resumeAfterSettingsRef = useRef(false);
 
   useEffect(() => {
@@ -71,20 +68,6 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const handleFileSelect = (selectedFile: File) => {
-    setParseError('');
-    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-    if (!validTypes.includes(selectedFile.type)) {
-      setParseError(t('dashboard.upload.invalidType'));
-      return;
-    }
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setParseError(t('dashboard.upload.fileTooLarge'));
-      return;
-    }
-    setFile(selectedFile);
   };
 
   const openAISettings = () => {
@@ -132,29 +115,6 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
     setFile(null);
     setParseError('');
   };
-
-  const fileSelectionDisabled = !settingsHydrated || !hasAIConfig;
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (fileSelectionDisabled) return;
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) handleFileSelect(droppedFile);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (!fileSelectionDisabled) setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const fileIcon = file?.type === 'application/pdf' ? FileText : Image;
-  const FileIcon = fileIcon;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
@@ -252,95 +212,17 @@ export function CreateResumeDialog({ open, onClose, onCreate }: CreateResumeDial
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Dropzone */}
-              <div
-                className={cn(
-                  'relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-colors',
-                  fileSelectionDisabled
-                    ? 'border-zinc-200 bg-zinc-50 opacity-60 dark:border-zinc-800 dark:bg-zinc-900/40'
-                    : isDragging
-                      ? 'border-brand bg-brand-muted dark:bg-brand-muted'
-                      : file
-                        ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/20'
-                        : 'border-zinc-300 hover:border-zinc-400 dark:border-zinc-600 dark:hover:border-zinc-500'
-                )}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                {file ? (
-                  <div className="flex items-center gap-3">
-                    <FileIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-700 dark:text-zinc-200">{file.name}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {(file.size / 1024).toFixed(0)} KB
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={t('common.delete')}
-                      className="cursor-pointer rounded-full p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700"
-                      onClick={() => setFile(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="mb-2 h-8 w-8 text-zinc-400" />
-                    <p className="text-sm text-zinc-600 dark:text-zinc-300">{t('dashboard.upload.dropzone')}</p>
-                    <p className="mt-1 text-xs text-zinc-400">{t('dashboard.upload.acceptedTypes')}</p>
-                    <button
-                      type="button"
-                      disabled={fileSelectionDisabled}
-                      className="mt-3 cursor-pointer rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {t('dashboard.upload.browse')}
-                    </button>
-                  </>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPTED_EXTENSIONS}
-                  className="hidden"
-                  disabled={fileSelectionDisabled}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleFileSelect(f);
-                    e.target.value = '';
-                  }}
-                />
-              </div>
+              <ResumeFileUpload
+                file={file}
+                disabled={isParsing}
+                onConfigureAI={openAISettings}
+                onFileChange={(selectedFile) => {
+                  setParseError('');
+                  setFile(selectedFile);
+                }}
+              />
 
-              {settingsHydrated && (
-                <div className={cn(
-                  'flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm',
-                  hasAIConfig
-                    ? 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200'
-                    : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200'
-                )}>
-                  {!hasAIConfig && <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
-                  <div className="min-w-0 flex-1">
-                    <p>{t(hasAIConfig ? 'dashboard.upload.multimodalHint' : 'dashboard.upload.aiRequired')}</p>
-                    {!hasAIConfig && (
-                      <button
-                        type="button"
-                        onClick={openAISettings}
-                        className="mt-1 cursor-pointer font-medium underline underline-offset-2"
-                      >
-                        {t('dashboard.upload.configureAI')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {parseError && (
-                <p className="text-sm text-red-500">{parseError}</p>
-              )}
+              {parseError && <p className="text-sm text-red-500">{parseError}</p>}
 
               {/* Template selector for uploaded file */}
               <div>

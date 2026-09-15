@@ -163,6 +163,15 @@ describe('evaluationOutputSchema', () => {
     expect(result.dimensionScores[0].score).toBe(82);
   });
 
+  it('容忍字符串中的未转义换行符', () => {
+    const raw = JSON.stringify({ ...valid, overallComment: '第一段\n第二段' })
+      .replace('第一段\\n第二段', '第一段\n第二段');
+
+    const result = extractJson(raw, evaluationOutputSchema);
+
+    expect(result.overallComment).toBe('第一段\n第二段');
+  });
+
   it('分数超出 0-100 时钳到边界，而不是整份丢弃', () => {
     const raw = JSON.stringify({
       ...valid,

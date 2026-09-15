@@ -1,6 +1,8 @@
 import { z } from 'zod/v4';
 import { QUESTION_COUNT_MAX, QUESTION_COUNT_MIN } from '@/types/recruit';
 
+export const UNNAMED_CANDIDATE_NAME = '未命名候选人';
+
 // ── 通用容错工具 ──────────────────────────────────────────────────────────────
 
 /** 模型经常把数组字段整个漏掉或给成 null，统一补成空数组。 */
@@ -53,7 +55,7 @@ export const updateJobInputSchema = z.object({
 });
 
 export const createCandidateInputSchema = z.object({
-  name: z.string().min(1).max(50),
+  name: z.string().min(1).max(50).optional(),
 });
 
 export const updateCandidateInputSchema = z.object({

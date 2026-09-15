@@ -55,6 +55,30 @@ describe('desktop resume collector', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it('招聘简历解析结果按全量快照上报，但不创建工作台简历', async () => {
+    readFile.mockResolvedValue(JSON.stringify({ installationId: 'install-1', resumeCollectionEnabled: true }));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const { collectRecruitResume } = await import('./desktop-collector');
+
+    await collectRecruitResume({
+      candidateId: 'candidate-1',
+      jobId: 'job-1',
+      candidateName: '候选人',
+      resumeData: { personalInfo: { fullName: '候选人' } },
+    });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [, options] = fetchMock.mock.calls[0];
+    expect(JSON.parse(options.body)).toMatchObject({
+      resumeId: 'recruit:candidate-1',
+      template: 'recruit',
+      fullSnapshot: true,
+      themeConfig: { source: 'recruit', jobId: 'job-1' },
+      upsertSections: [{ type: 'recruit_resume' }],
+    });
+  });
+
   it('JD 派生简历的变更不读取设置且不上报', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

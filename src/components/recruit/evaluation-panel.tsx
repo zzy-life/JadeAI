@@ -64,6 +64,7 @@ export function EvaluationPanel({
   const answeredCount = evaluation?.questionEvaluations.filter((q) => q.answered).length ?? 0;
   // 逐题记录过多少题——决定粘贴框上方那句提示说什么
   const recordedCount = countAnswered((candidate.questions as InterviewQuestion[] | null) ?? []);
+  const hasEvaluationInput = recordedCount > 0 || Boolean(transcript.trim());
 
   async function doGenerate() {
     setGenerating(true);
@@ -145,7 +146,7 @@ export function EvaluationPanel({
           <div className="flex justify-end">
             <Button
               onClick={handleGenerate}
-              disabled={generating || !transcript.trim()}
+              disabled={generating || !hasEvaluationInput}
               className="cursor-pointer gap-2 bg-brand hover:bg-brand-hover"
             >
               {generating ? (

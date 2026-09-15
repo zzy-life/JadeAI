@@ -10,7 +10,7 @@ import type {
 
 const LANGUAGE_RULE = `IMPORTANT: Detect the primary language of the job description. You MUST respond entirely in that language. If the JD is in Chinese, all output (questions, rubrics, comments) must be in Chinese.`;
 
-const JSON_RULE = `CRITICAL: You are a JSON API. Your entire response must be a single valid JSON object starting with { and ending with }. Do NOT use markdown syntax. Do NOT wrap in code fences. Do NOT add any text before or after the JSON.`;
+const JSON_RULE = `CRITICAL: You are a JSON API. Your entire response must be a single valid JSON object starting with { and ending with }. Do NOT use markdown syntax. Do NOT wrap in code fences. Do NOT add any text before or after the JSON. Inside JSON string values, escape every newline as \\n, every double quote as \", and every backslash as \\\\; never emit literal line breaks or tabs inside a string value.`;
 
 const SLOT_QUESTIONS_SYSTEM = `You are a senior interviewer at a top-tier technology company, known for questions that separate people who actually did the work from people who can describe it. You are writing the questions for ONE competency only — the one named in the user message.
 
@@ -417,7 +417,7 @@ ${questionBlocks}
 Interview transcript:
 ${input.transcript}
 
-Respond with JSON only.`;
+Return one valid JSON object only. In every JSON string, write line breaks as \\n (not literal newlines), escape double quotes as \", and escape backslashes as \\\\.`;
 
   return { system: EVALUATION_SYSTEM, prompt };
 }

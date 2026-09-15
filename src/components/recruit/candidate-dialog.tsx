@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Upload, Loader2, Check, FileText, X, AlertCircle } from 'lucide-react';
+import { Loader2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from '@/i18n/routing';
 import {
@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFingerprint } from '@/hooks/use-fingerprint';
@@ -26,6 +25,7 @@ import {
   type CandidateSetupProgress,
 } from '@/lib/recruit/candidate-setup-flow';
 import type { CandidateSummary } from '@/types/recruit';
+import { ResumeFileUpload } from '@/components/resume/resume-file-upload';
 
 type Step = 'create' | 'resume' | 'questions';
 const STEPS: Step[] = ['create', 'resume', 'questions'];
@@ -60,9 +60,7 @@ export function CandidateDialog({
   const aiModel = useSettingsStore((state) => state.aiModel);
   const settingsHydrated = useSettingsStore((state) => state._hydrated);
   const activeModal = useUIStore((state) => state.activeModal);
-  const openAISettings = useUIStore((state) => state.openAISettings);
   const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
-  const fileRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<CandidateSetupProgress>({
     candidateId: candidate?.id ?? null,
     resumeSaved: false,
@@ -86,8 +84,7 @@ export function CandidateDialog({
   }, [open, candidate]);
 
   const hasResume = progress.resumeSaved || Boolean(file) || Boolean(text.trim());
-  const canSubmit = settingsHydrated && hasAIConfig && (editing || name.trim()) && hasResume && running === null;
-  const createdInThisFlow = !editing && Boolean(progress.candidateId);
+  const canSubmit = settingsHydrated && hasAIConfig && hasResume && running === null;
   const resumeLocked = progress.resumeSaved;
 
   const headers = (): Record<string, string> =>
@@ -112,7 +109,8 @@ export function CandidateDialog({
           const res = await fetch(`/api/recruit/jobs/${jobId}/candidates`, {
             method: 'POST',
             headers: { 'content-type': 'application/json', ...headers() },
-            body: JSON.stringify({ name: name.trim() }),
+            // 姓名为空时省略字段，由后端兜底为默认占位名（解析简历后回填真名）
+            body: JSON.stringify(name.trim() ? { name: name.trim() } : {}),
           });
           if (!res.ok) throw new Error('create failed');
           return (await res.json()).candidate.id as string;
@@ -188,79 +186,15 @@ export function CandidateDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="cand-name">{t('candidates.name')}</Label>
-            <Input
-              id="cand-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('candidates.namePlaceholder')}
-              disabled={running !== null || createdInThisFlow}
-            />
-          </div>
-
-          <div className="space-y-1.5">
             <Label>{t('addFlow.resumeLabel')}</Label>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf,image/png,image/jpeg,image/webp"
-              className="hidden"
-              disabled={running !== null || resumeLocked || !settingsHydrated || !hasAIConfig}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  setFile(f);
-                  setText('');
-                }
-                // 清空，否则同一个文件重选不触发 change
-                if (fileRef.current) fileRef.current.value = '';
+            <ResumeFileUpload
+              file={file}
+              disabled={running !== null || resumeLocked}
+              onFileChange={(selectedFile) => {
+                setFile(selectedFile);
+                if (selectedFile) setText('');
               }}
             />
-            {file ? (
-              <div className="flex items-center gap-2.5 rounded-lg border px-3 py-2.5 dark:border-zinc-800">
-                <FileText className="h-4 w-4 shrink-0 text-zinc-400" />
-                <span className="min-w-0 flex-1 truncate text-sm">{file.name}</span>
-                <button
-                  type="button"
-                  onClick={() => setFile(null)}
-                  disabled={running !== null || resumeLocked}
-                  aria-label={t('cancel')}
-                  className="shrink-0 cursor-pointer text-zinc-400 hover:text-zinc-700 disabled:opacity-40 dark:hover:text-zinc-200"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={running !== null || resumeLocked || !settingsHydrated || !hasAIConfig}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-3 py-3 text-left transition-colors hover:border-brand disabled:opacity-40 dark:border-zinc-700"
-              >
-                <Upload className="h-4 w-4 shrink-0 text-zinc-400" />
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">{t('resume.upload')}</span>
-                  <span className="block text-xs text-zinc-500">{t('resume.uploadHint')}</span>
-                </span>
-              </button>
-            )}
-            {settingsHydrated && (
-              <div className={hasAIConfig ? 'text-xs text-zinc-500 dark:text-zinc-400' : 'flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200'}>
-                {!hasAIConfig && <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
-                <div>
-                  <span>{t(hasAIConfig ? 'resume.multimodalHint' : 'resume.aiRequired')}</span>
-                  {!hasAIConfig && (
-                    <button
-                      type="button"
-                      onClick={openAISettings}
-                      className="ml-1 cursor-pointer font-medium underline underline-offset-2"
-                    >
-                      {t('resume.configureAI')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {!file && (

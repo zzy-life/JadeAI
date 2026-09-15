@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractAIConfig, AIConfigError } from '@/lib/ai/provider';
+import { UNNAMED_CANDIDATE_NAME } from '@/lib/ai/recruit-schema';
 import { parseResumeFile, validateResumeFile } from '@/lib/ai/parse-resume';
 import { recruitRepository } from '@/lib/db/repositories/recruit.repository';
 import { requireOwnedCandidate } from '@/lib/recruit/access';
+import { collectRecruitResume } from '@/lib/resume/desktop-collector';
 import type { ParsedResume } from '@/lib/ai/parse-schema';
 
 /**
@@ -62,9 +64,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // 简历换了，之前生成的题目就过期了
       questions: null,
       status: 'pending',
-      // 候选人还没起过名字时，用简历里的姓名兜底
-      ...(access.candidate.name ? {} : { name: resumeData.personalInfo?.fullName || '' }),
+      // 仅覆盖系统占位名，保留用户手动填写的候选人姓名。
+      ...(!access.candidate.name.trim() || access.candidate.name === UNNAMED_CANDIDATE_NAME
+        ? { name: resumeData.personalInfo?.fullName?.trim() || UNNAMED_CANDIDATE_NAME }
+        : {}),
     });
+
+    // 招聘简历不进入工作台；仅在解析并保存成功后异步上报解析结果。
+    if (candidate) {
+      void collectRecruitResume({
+        candidateId: candidate.id,
+        jobId: candidate.jobId,
+        candidateName: candidate.name,
+        resumeData,
+      });
+    }
 
     return NextResponse.json({ candidate });
   } catch (error) {

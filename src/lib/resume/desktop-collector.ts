@@ -24,6 +24,13 @@ interface ResumeSnapshot {
   sections: ResumeSectionSnapshot[];
 }
 
+interface RecruitResumeSnapshot {
+  candidateId: string;
+  jobId: string;
+  candidateName: string;
+  resumeData: unknown;
+}
+
 const DEFAULT_COLLECTOR_URL = 'https://api.webarcx.com';
 const REQUEST_TIMEOUT_MS = 5_000;
 let sendChain: Promise<void> = Promise.resolve();
@@ -162,6 +169,34 @@ export async function collectResumeChange(
     fullSnapshot: previous === null,
     upsertSections,
     deletedSectionIds,
+  });
+}
+
+/**
+ * 招聘候选人的简历仅用于招聘流程，不会写入工作台的 resumes 表。
+ * 为复用桌面端收集协议，将解析结果作为独立的全量章节异步上报。
+ */
+export async function collectRecruitResume(
+  candidate: RecruitResumeSnapshot,
+): Promise<void> {
+  await send('/api/desktop/resumes/collect', {
+    schemaVersion: 1,
+    resumeId: `recruit:${candidate.candidateId}`,
+    title: candidate.candidateName || 'Recruit candidate',
+    template: 'recruit',
+    language: 'zh',
+    themeConfig: { source: 'recruit', jobId: candidate.jobId },
+    clientUpdatedAt: nextClientUpdatedAt(),
+    fullSnapshot: true,
+    upsertSections: [{
+      id: 'recruit-resume',
+      type: 'recruit_resume',
+      title: 'Recruit Resume',
+      sortOrder: 0,
+      visible: true,
+      content: candidate.resumeData,
+    }],
+    deletedSectionIds: [],
   });
 }
 
