@@ -24,7 +24,7 @@
     "agreeTerms": "登录即表示你同意我们的服务条款和隐私政策"
   },
   "dashboard": {
-    "nav": "工作台",
+    "nav": "我的简历",
     "title": "我的简历",
     "createResume": "新建简历",
     "createResumeDescription": "从空白模板开始创建新简历",
@@ -594,12 +594,12 @@
     "noLabel": "未标记"
   },
   "templates": {
-    "title": "模板",
+    "title": "简历模板",
     "subtitle": "选择一个模板开始创建你的简历",
     "preview": "预览",
     "useTemplate": "使用此模板",
     "creating": "创建中...",
-    "nav": "模板"
+    "nav": "简历模板"
   },
   "tour": {
     "next": "下一步",
@@ -954,7 +954,7 @@
     }
   },
   "recruit": {
-    "nav": "招聘",
+    "nav": "招聘工作台",
     "title": "招聘岗位",
     "subtitle": "上传 JD 与简历，生成面试题，面完打分",
     "empty": "还没有岗位，先创建一个",
@@ -1154,7 +1154,7 @@
       "copyAll": "复制全部题目",
       "copied": "已复制到剪贴板",
       "answer": "候选人回答",
-      "answerPlaceholder": "边问边记，不用整理",
+      "answerPlaceholder": "记录候选人的回答要点，可边问边记，无需整理",
       "recorded": "{done}/{total} 已记录",
       "recordedWithSkipped": "{done}/{total} 已记录 · {skipped} 题跳过",
       "saving": "保存中…",
@@ -1191,7 +1191,7 @@
     },
     "evaluation": {
       "transcript": "面试记录",
-      "transcriptPlaceholder": "把整场面试的问答记录粘贴到这里，AI 会自动对应到各道题目并打分",
+      "transcriptPlaceholder": "粘贴整场面试中面试官提问与候选人回答的记录，AI 会自动匹配各题并评分",
       "transcriptHint": "不需要逐题整理，速记或完整记录都可以",
       "transcriptSupplement": "逐题已记录 {done} 题，这里补充未逐题记录的部分",
       "transcriptCollapsed": "面试记录（{chars} 字）· 展开编辑",

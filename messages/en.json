@@ -24,7 +24,7 @@
     "agreeTerms": "By signing in, you agree to our Terms of Service and Privacy Policy"
   },
   "dashboard": {
-    "nav": "Dashboard",
+    "nav": "My Resumes",
     "title": "My Resumes",
     "createResume": "New Resume",
     "createResumeDescription": "Start from a blank template",
@@ -594,12 +594,12 @@
     "noLabel": "Unlabeled"
   },
   "templates": {
-    "title": "Templates",
+    "title": "Resume Templates",
     "subtitle": "Choose a template to start building your resume",
     "preview": "Preview",
     "useTemplate": "Use This Template",
     "creating": "Creating...",
-    "nav": "Templates"
+    "nav": "Resume Templates"
   },
   "tour": {
     "next": "Next",
@@ -954,7 +954,7 @@
     }
   },
   "recruit": {
-    "nav": "Hiring",
+    "nav": "Hiring Workspace",
     "title": "Open roles",
     "subtitle": "Upload a JD and resumes, generate questions, score the interview",
     "empty": "No roles yet — create one to get started",
