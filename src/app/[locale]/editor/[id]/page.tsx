@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { useEditor } from '@/hooks/use-editor';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { useIsMobile } from '@/hooks/use-media-query';
@@ -45,7 +46,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { resume, sections, updateSection, addSection, removeSection, reorderSections } = useEditor(id);
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { showThemeEditor, mobileActiveTab } = useEditorStore();
+  const { showThemeEditor, toggleThemeEditor, mobileActiveTab } = useEditorStore();
+  const tTheme = useTranslations('themeEditor');
   const { activeModal, openModal, closeModal } = useUIStore();
   const { hydrate, _hydrated } = useSettingsStore();
   const startTour = useTourStore((s) => s.startTour);
@@ -126,7 +128,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           />
         </div>
 
-        {showThemeEditor && <ThemeEditor />}
+        {!isMobile && showThemeEditor && <ThemeEditor onClose={toggleThemeEditor} />}
 
         {/* Preview: always mounted, hidden on mobile when edit tab active */}
         <div className={cn(
@@ -157,6 +159,19 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             onAddSection={(s) => { addSection(s); setSidebarOpen(false); }}
             onReorderSections={reorderSections}
           />
+        </SheetContent>
+      </Sheet>
+
+      {/* 移动端使用覆盖式抽屉，避免主题面板挤压编辑与预览区域。 */}
+      <Sheet
+        open={isMobile && showThemeEditor}
+        onOpenChange={(open) => {
+          if (!open && showThemeEditor) toggleThemeEditor();
+        }}
+      >
+        <SheetContent side="right" className="w-[85vw] max-w-sm gap-0 p-0" showCloseButton={false} aria-describedby={undefined}>
+          <SheetTitle className="sr-only">{tTheme('title')}</SheetTitle>
+          <ThemeEditor onClose={toggleThemeEditor} className="min-h-0 w-full flex-1 border-none" />
         </SheetContent>
       </Sheet>
 

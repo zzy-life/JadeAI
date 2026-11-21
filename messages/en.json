@@ -333,6 +333,7 @@
   "themeEditor": {
     "title": "Theme Editor",
     "reset": "Reset Theme",
+    "close": "Close Theme Editor",
     "templateSection": "Template",
     "presets": "Presets",
     "preset": {

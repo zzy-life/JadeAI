@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  X,
   LayoutGrid,
   Check,
 } from 'lucide-react';
@@ -257,9 +258,10 @@ function ThemeSection({
 
 interface ThemeEditorProps {
   onClose?: () => void;
+  className?: string;
 }
 
-export function ThemeEditor({ onClose }: ThemeEditorProps) {
+export function ThemeEditor({ onClose, className }: ThemeEditorProps) {
   const t = useTranslations('themeEditor');
   const tRoot = useTranslations();
   const { currentResume } = useResumeStore();
@@ -318,22 +320,36 @@ export function ThemeEditor({ onClose }: ThemeEditorProps) {
   };
 
   return (
-    <div className="flex h-full w-72 shrink-0 flex-col border-l bg-white dark:bg-zinc-900 dark:border-zinc-800">
+    <div className={cn('flex h-full w-72 shrink-0 flex-col border-l bg-white dark:bg-zinc-900 dark:border-zinc-800', className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3 dark:border-zinc-800">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           <Palette className="h-4 w-4 text-zinc-500" />
           {t('title')}
         </h3>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={resetTheme}
-          title={t('reset')}
-          className="cursor-pointer text-zinc-400 hover:text-zinc-600"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={resetTheme}
+            title={t('reset')}
+            className="cursor-pointer text-zinc-400 hover:text-zinc-600"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </Button>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onClose}
+              aria-label={t('close')}
+              title={t('close')}
+              className="cursor-pointer text-zinc-400 hover:text-zinc-600"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
