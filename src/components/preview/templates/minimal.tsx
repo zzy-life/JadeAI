@@ -33,6 +33,7 @@ export function MinimalTemplate({ resume }: { resume: Resume }) {
               {pi.phone && <span>{pi.phone}</span>}
               {pi.wechat && <span>{pi.wechat}</span>}
               {pi.location && <span>{pi.location}</span>}
+              {pi.website && <span>{pi.website}</span>}
               {pi.linkedin && <span>LinkedIn: {pi.linkedin}</span>}
               {pi.github && <span>GitHub: {pi.github}</span>}
             </div>

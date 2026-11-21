@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import type { Resume, ThemeConfig } from '@/types/resume';
-import { BACKGROUND_TEMPLATES } from '@/lib/constants';
+import { BACKGROUND_TEMPLATES, buildPageMarginCSS } from '@/lib/constants';
 import { ClassicTemplate } from './templates/classic';
 import { ModernTemplate } from './templates/modern';
 import { MinimalTemplate } from './templates/minimal';
@@ -153,7 +153,12 @@ function isDark(hex: string): boolean {
 function buildThemeCSS(scopeId: string, theme: ThemeConfig, template: string): string {
   const s = `[data-theme-scope="${scopeId}"]`;
   const fs = FONT_SIZE_SCALE[theme.fontSize] || FONT_SIZE_SCALE.medium;
-  const m = theme.margin;
+  const m = {
+    top: theme.margin?.top ?? DEFAULT_THEME.margin.top,
+    right: theme.margin?.right ?? DEFAULT_THEME.margin.right,
+    bottom: theme.margin?.bottom ?? DEFAULT_THEME.margin.bottom,
+    left: theme.margin?.left ?? DEFAULT_THEME.margin.left,
+  };
   const needsPadding = !BACKGROUND_TEMPLATES.has(template);
   const primaryIsDark = isDark(theme.primaryColor);
 
@@ -173,6 +178,7 @@ function buildThemeCSS(scopeId: string, theme: ThemeConfig, template: string): s
       --base-margin-bottom: ${m.bottom}px;
       --base-margin-left: ${m.left}px;
     }
+    ${buildPageMarginCSS(s, template)}
     ${s} p, ${s} li, ${s} span, ${s} td, ${s} a, ${s} div {
       font-size: ${fs.body} !important;
       line-height: ${theme.lineSpacing} !important;

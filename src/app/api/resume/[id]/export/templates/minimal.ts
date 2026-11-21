@@ -99,6 +99,7 @@ export function buildMinimalHtml(resume: ResumeWithSections): string {
             ${pi.phone ? `<span>${esc(pi.phone)}</span>` : ''}
             ${pi.wechat ? `<span>${esc(pi.wechat)}</span>` : ''}
             ${pi.location ? `<span>${esc(pi.location)}</span>` : ''}
+            ${pi.website ? `<span>${esc(pi.website)}</span>` : ''}
             ${pi.linkedin ? `<span>LinkedIn: ${esc(pi.linkedin)}</span>` : ''}
             ${pi.github ? `<span>GitHub: ${esc(pi.github)}</span>` : ''}
           </div>

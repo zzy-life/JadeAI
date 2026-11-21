@@ -188,8 +188,8 @@ export async function generateHtml(resume: ResumeWithSections, forPdf = false): 
   // putting clone on the outer flex container inflates the box at page breaks → blank pages.
   const outerNeedsClone = isFullDark || (isBackground && !isSidebarDark);
   const pxToMm = (px: number) => Math.round((px / 3.78) * 10) / 10;
-  const pageMarginTop = pxToMm(theme.margin.top);
-  const pageMarginBottom = pxToMm(theme.margin.bottom);
+  const pageMarginTop = pxToMm(theme.margin?.top ?? DEFAULT_THEME.margin.top);
+  const pageMarginBottom = pxToMm(theme.margin?.bottom ?? DEFAULT_THEME.margin.bottom);
 
   const pdfOverrides = forPdf
     ? `/* Page margins and fragmentation */
@@ -206,22 +206,21 @@ export async function generateHtml(resume: ResumeWithSections, forPdf = false): 
        h2, h3 { break-after: avoid !important; }
        p { orphans: 3; widows: 3; }
        ${isSidebarDark ? `/* Sidebar dark: body gradient = sidebar colour every page.
-          Sidebar uses slice to avoid clone rendering artifacts at page breaks.
-          Content uses clone to replicate padding at page breaks. */
+          Sidebar and content use clone to preserve user padding at page breaks. */
        .resume-export > div > div:first-child {
          background: ${sidebarDark.bg} !important;
          background-image: none !important;
-         -webkit-box-decoration-break: slice !important;
-         box-decoration-break: slice !important;
-         padding-top: 5mm !important;
-         padding-bottom: 5mm !important;
+         -webkit-box-decoration-break: clone !important;
+         box-decoration-break: clone !important;
+         padding-top: var(--base-margin-top) !important;
+         padding-bottom: var(--base-margin-bottom) !important;
        }
        .resume-export > div > div:last-child {
          background-color: white !important;
          -webkit-box-decoration-break: clone;
          box-decoration-break: clone;
-         padding-top: 5mm !important;
-         padding-bottom: 5mm !important;
+         padding-top: var(--base-margin-top) !important;
+         padding-bottom: var(--base-margin-bottom) !important;
        }` : isBackground ? `/* Background templates: padding lives on child divs (e.g. p-8),
           clone so padding replicates at each page break. */
        .resume-export > div > div {
@@ -230,7 +229,9 @@ export async function generateHtml(resume: ResumeWithSections, forPdf = false): 
        }` : ''}
        ${isFullDark ? `/* Full-dark: simulate @page margin via content padding */
        .resume-export > div > *:last-child {
-         padding: 12mm 10mm !important;
+         padding-right: var(--base-margin-right) !important;
+         padding-bottom: var(--base-margin-bottom) !important;
+         padding-left: var(--base-margin-left) !important;
          -webkit-box-decoration-break: clone;
          box-decoration-break: clone;
        }` : ''}`

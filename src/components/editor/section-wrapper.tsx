@@ -74,16 +74,18 @@ export function SectionWrapper({ section, onUpdate, onRemove }: SectionWrapperPr
     <div
       className={`rounded-xl border bg-white shadow-sm transition-all duration-200 dark:bg-zinc-900 ${
         isSelected ? 'border-brand shadow-brand-muted/50 dark:shadow-brand/20' : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600'
-      } ${!section.visible ? 'opacity-50' : ''}`}
+      } ${isRenamable && !section.visible ? 'opacity-50' : ''}`}
       onClick={() => selectSection(section.id)}
     >
       <div className="flex flex-row items-center justify-between border-b border-zinc-100 px-3 py-2.5 md:px-4 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <GripVertical
-            className="h-4 w-4 cursor-grab text-zinc-300 active:cursor-grabbing"
-            {...attributes}
-            {...listeners}
-          />
+          {isRenamable && (
+            <GripVertical
+              className="h-4 w-4 cursor-grab text-zinc-300 active:cursor-grabbing"
+              {...attributes}
+              {...listeners}
+            />
+          )}
           {isRenaming ? (
             <input
               ref={renameInputRef}
@@ -119,32 +121,36 @@ export function SectionWrapper({ section, onUpdate, onRemove }: SectionWrapperPr
           >
             <Sparkles className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 cursor-pointer p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSectionVisibility(section.id);
-            }}
-          >
-            {section.visible ? (
-              <Eye className="h-3.5 w-3.5 text-zinc-400" />
-            ) : (
-              <EyeOff className="h-3.5 w-3.5 text-zinc-400" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 cursor-pointer p-0 text-zinc-400 hover:text-red-500"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+          {isRenamable && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 cursor-pointer p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSectionVisibility(section.id);
+                }}
+              >
+                {section.visible ? (
+                  <Eye className="h-3.5 w-3.5 text-zinc-400" />
+                ) : (
+                  <EyeOff className="h-3.5 w-3.5 text-zinc-400" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 cursor-pointer p-0 text-zinc-400 hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <div className="px-4 pb-4 pt-3">

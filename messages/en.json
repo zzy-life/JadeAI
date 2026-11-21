@@ -157,6 +157,9 @@
       "custom": "Custom Section"
     },
     "fields": {
+      "avatarInvalidType": "Please select an image file",
+      "avatarTooLarge": "Image size must not exceed 5MB",
+      "avatarReadFailed": "Failed to read or process the image. Please select another image",
       "fullName": "Full Name",
       "jobTitle": "Job Title",
       "age": "Age",

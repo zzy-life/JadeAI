@@ -152,14 +152,22 @@ function resolveTheme(cfg: unknown, template?: string): DocxTheme {
   const userCfg = (cfg as Record<string, unknown>) || {};
   const tc = template ? TEMPLATE_STYLES[template] : undefined;
 
-  // Merge: global defaults → template colors → user overrides
-  const base = { ...DEFAULT_THEME } as Record<string, unknown>;
-  if (tc?.accent && !userCfg.accentColor) base.accentColor = tc.accent;
-  const t = { ...base, ...userCfg } as typeof DEFAULT_THEME;
+  // 全局默认色不视为主动定制，避免覆盖模板专属配色。
+  const rawPrimary = typeof userCfg.primaryColor === 'string' ? userCfg.primaryColor.trim() : '';
+  const rawAccent = typeof userCfg.accentColor === 'string' ? userCfg.accentColor.trim() : '';
+  const isDefaultPrimary = !rawPrimary || rawPrimary.toLowerCase() === '#1a1a1a';
+  const isDefaultAccent = !rawAccent || rawAccent.toLowerCase() === '#3b82f6';
+  const t = { ...DEFAULT_THEME, ...userCfg } as typeof DEFAULT_THEME;
 
   const fs = FONT_SIZES[t.fontSize] || FONT_SIZES.medium;
-  const primary = strip(t.primaryColor);
-  const accent = strip(t.accentColor);
+  let primary = strip(DEFAULT_THEME.primaryColor);
+  if (!isDefaultPrimary) {
+    primary = strip(rawPrimary);
+  }
+  let accent = strip(tc?.accent || DEFAULT_THEME.accentColor);
+  if (!isDefaultAccent) {
+    accent = strip(rawAccent);
+  }
 
   // Header: dark-bg if template has headerBg, otherwise light
   const wantsDarkHeader = !!tc?.headerBg;
@@ -167,9 +175,10 @@ function resolveTheme(cfg: unknown, template?: string): DocxTheme {
   let headerLight: boolean;
 
   if (wantsDarkHeader) {
-    headerBg = userCfg.primaryColor
-      ? strip(userCfg.primaryColor as string)
-      : strip(tc!.headerBg!);
+    headerBg = strip(tc!.headerBg!);
+    if (!isDefaultPrimary) {
+      headerBg = strip(rawPrimary);
+    }
     headerLight = false;
   } else {
     headerLight = true;
@@ -177,18 +186,33 @@ function resolveTheme(cfg: unknown, template?: string): DocxTheme {
   }
   const headerText = headerLight ? '222222' : (isDark(headerBg) ? 'FFFFFF' : '222222');
 
-  // Secondary: template-specific > accent
-  const secondary = tc?.secondary && !userCfg.accentColor ? strip(tc.secondary) : accent;
+  // 默认配色保留模板层次；主动设置强调色时，条目边框也跟随设置。
+  let secondary = accent;
+  if (isDefaultAccent && tc?.secondary) {
+    secondary = strip(tc.secondary);
+  }
 
   // Layout styles with smart defaults
   const headingStyle: HeadingStyle = tc?.headingStyle ?? (headerLight ? 'bottom-border' : 'left-border');
   const itemBorder = tc?.itemBorder ?? !headerLight;
 
+  // 仅在 DOCX 内拆分中西文字体，保留已有英文字体选择。
+  let fontWest = t.fontFamily || 'Calibri';
+  let fontEast = 'Microsoft YaHei';
+  const fontFamily = fontWest.toLowerCase();
+  if (fontFamily === 'simsun') {
+    fontWest = 'Times New Roman';
+    fontEast = 'SimSun';
+  } else if (fontFamily === 'kaiti') {
+    fontWest = 'Times New Roman';
+    fontEast = 'KaiTi';
+  }
+
   return {
     primary, accent, secondary, headerBg, headerText, headerLight,
     headingStyle, headerAlign: tc?.headerAlign ?? 'center', itemBorder,
-    fontWest: t.fontFamily || 'Calibri',
-    fontEast: 'Microsoft YaHei',
+    fontWest,
+    fontEast,
     bodySize: fs.body,
     h1Size: fs.h1,
     h2Size: fs.h2,
@@ -351,12 +375,19 @@ function sectionHeading(title: string, theme: DocxTheme): DocxChild[] {
 
 // ─── Header (dark-bg vs light) ───────────────────────────────
 
-function tryParseImage(avatar: string): { data: Buffer; ext: 'png' | 'jpg' | 'gif' } | null {
-  const m = avatar.match(/^data:image\/(png|jpe?g|gif);base64,(.+)$/);
+function tryParseImage(avatar: string): { data: Buffer; ext: 'png' | 'jpg' | 'gif' | 'bmp' } | null {
+  // 只读取内嵌图片；允许大小写差异及 Base64 中的空格、换行。
+  const m = avatar.trim().match(/^data:image\/(png|jpe?g|gif|bmp);base64,([\s\S]+)$/i);
   if (!m) return null;
   try {
-    return { data: Buffer.from(m[2], 'base64'), ext: m[1] === 'jpeg' ? 'jpg' : m[1] as 'png' | 'gif' };
-  } catch { return null; }
+    const rawExt = m[1].toLowerCase();
+    const ext = rawExt === 'jpeg' ? 'jpg' : rawExt as 'png' | 'jpg' | 'gif' | 'bmp';
+    const data = Buffer.from(m[2].replace(/\s+/g, ''), 'base64');
+    if (!data.length) return null;
+    return { data, ext };
+  } catch {
+    return null;
+  }
 }
 
 function buildContactParts(info: PersonalInfoContent): string[] {
@@ -416,7 +447,7 @@ function buildHeaderDark(info: PersonalInfoContent, theme: DocxTheme): DocxChild
     const avatarRun = new ImageRun({
       data: img.data,
       transformation: { width: 72, height: 72 },
-      type: img.ext === 'jpg' ? 'jpg' : 'png',
+      type: img.ext,
     });
     headerTable = new Table({
       borders: TableBorders.NONE,
@@ -458,17 +489,19 @@ function buildHeaderDark(info: PersonalInfoContent, theme: DocxTheme): DocxChild
 
 function buildHeaderLight(info: PersonalInfoContent, theme: DocxTheme): DocxChild[] {
   const res: DocxChild[] = [];
+  const textParas: Paragraph[] = [];
   const align = theme.headerAlign === 'left' ? AlignmentType.LEFT : AlignmentType.CENTER;
+  const img = info.avatar ? tryParseImage(info.avatar) : null;
 
   if (info.fullName) {
-    res.push(new Paragraph({
+    textParas.push(new Paragraph({
       children: [run(info.fullName, theme, { size: theme.h1Size, bold: theme.headerAlign !== 'left', color: theme.primary })],
       alignment: align,
       spacing: { after: 60 },
     }));
   }
   if (info.jobTitle) {
-    res.push(new Paragraph({
+    textParas.push(new Paragraph({
       children: [run(info.jobTitle, theme, { size: theme.h3Size, color: '52525b' })],
       alignment: align,
       spacing: { after: 100 },
@@ -476,11 +509,50 @@ function buildHeaderLight(info: PersonalInfoContent, theme: DocxTheme): DocxChil
   }
   const parts = buildContactParts(info);
   if (parts.length) {
-    res.push(new Paragraph({
+    textParas.push(new Paragraph({
       children: [run(parts.join('   '), theme, { size: theme.bodySize - 2, color: '52525b' })],
       alignment: align,
       spacing: { after: 60 },
     }));
+  }
+
+  if (img) {
+    const avatarPara = new Paragraph({
+      children: [new ImageRun({
+        data: img.data,
+        transformation: { width: 72, height: 72 },
+        type: img.ext,
+      })],
+      alignment: align,
+      spacing: { after: 120 },
+    });
+    if (theme.headerAlign === 'left') {
+      // 左对齐模板采用左图右文；空文字时也保留合法的单元格段落。
+      res.push(new Table({
+        borders: TableBorders.NONE,
+        rows: [new TableRow({
+          children: [
+            new TableCell({
+              children: [avatarPara],
+              width: { size: 15, type: WidthType.PERCENTAGE },
+              borders: TableBorders.NONE,
+              verticalAlign: VerticalAlignTable.CENTER,
+            }),
+            new TableCell({
+              children: textParas.length ? textParas : [new Paragraph({})],
+              width: { size: 85, type: WidthType.PERCENTAGE },
+              borders: TableBorders.NONE,
+            }),
+          ],
+        })],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      }));
+    } else {
+      // 居中模板将头像放在姓名上方。
+      res.push(avatarPara, ...textParas);
+    }
+  } else {
+    res.push(...textParas);
   }
 
   // Separator line (skip for plain/minimal style)
@@ -864,7 +936,7 @@ function buildSidebarHeader(info: PersonalInfoContent, theme: DocxTheme): DocxCh
       children: [new ImageRun({
         data: img.data,
         transformation: { width: 80, height: 80 },
-        type: img.ext === 'jpg' ? 'jpg' : 'png',
+        type: img.ext,
       })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 100 },
@@ -1071,12 +1143,19 @@ export async function generateDocxBuffer(resume: ResumeWithSections): Promise<Bu
     }
   }
 
-  const margin = theme.layout === 'sidebar-left' ? 360 : 720;
+  // 编辑器页边距单位为 px，DOCX 使用 twip（1 px = 15 twip）；保留显式的 0。
+  const userMargin = resume.themeConfig?.margin;
+  const margin = {
+    top: (userMargin?.top ?? 20) * 15,
+    right: (userMargin?.right ?? 20) * 15,
+    bottom: (userMargin?.bottom ?? 20) * 15,
+    left: (userMargin?.left ?? 20) * 15,
+  };
 
   const doc = new Document({
     sections: [{
       properties: {
-        page: { margin: { top: margin, right: margin, bottom: margin, left: margin } },
+        page: { margin },
       },
       children,
     }],

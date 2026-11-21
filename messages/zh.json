@@ -157,6 +157,9 @@
       "custom": "自定义模块"
     },
     "fields": {
+      "avatarInvalidType": "请选择图片文件",
+      "avatarTooLarge": "图片大小不能超过 5MB",
+      "avatarReadFailed": "图片读取或处理失败，请重新选择",
       "fullName": "姓名",
       "jobTitle": "职位",
       "age": "年龄",

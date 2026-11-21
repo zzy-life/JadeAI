@@ -61,7 +61,7 @@ function SortableSidebarItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: section.id });
+  } = useSortable({ id: section.id, disabled: section.type === 'personal_info' });
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(section.title);
@@ -102,11 +102,13 @@ function SortableSidebarItem({
           : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
       }`}
     >
-      <GripVertical
-        className="h-3 w-3 shrink-0 cursor-grab text-zinc-300 active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-      />
+      {isRenamable && (
+        <GripVertical
+          className="h-3 w-3 shrink-0 cursor-grab text-zinc-300 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        />
+      )}
       <button
         type="button"
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
@@ -153,6 +155,8 @@ export function EditorSidebar({ sections, onAddSection, onReorderSections }: Edi
   const t = useTranslations('editor');
   const { selectedSectionId, selectSection } = useEditorStore();
   const { updateSectionTitle } = useResumeStore();
+  const personalSections = sections.filter((s) => s.type === 'personal_info');
+  const sortableSections = sections.filter((s) => s.type !== 'personal_info');
 
   const handleSelect = useCallback((id: string) => {
     selectSection(id);
@@ -171,18 +175,18 @@ export function EditorSidebar({ sections, onAddSection, onReorderSections }: Edi
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (over && active.id !== over.id) {
-        const oldIndex = sections.findIndex((s) => s.id === active.id);
-        const newIndex = sections.findIndex((s) => s.id === over.id);
+        const oldIndex = sortableSections.findIndex((s) => s.id === active.id);
+        const newIndex = sortableSections.findIndex((s) => s.id === over.id);
         if (oldIndex !== -1 && newIndex !== -1) {
-          const newSections = [...sections];
+          const newSections = [...sortableSections];
           const [removed] = newSections.splice(oldIndex, 1);
           newSections.splice(newIndex, 0, removed);
-          const reordered = newSections.map((s, i) => ({ ...s, sortOrder: i }));
+          const reordered = [...personalSections, ...newSections].map((s, i) => ({ ...s, sortOrder: i }));
           onReorderSections(reordered);
         }
       }
     },
-    [sections, onReorderSections]
+    [personalSections, sortableSections, onReorderSections]
   );
 
   const sectionTypeLabels: Record<string, string> = {
@@ -240,11 +244,20 @@ export function EditorSidebar({ sections, onAddSection, onReorderSections }: Edi
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
+            {personalSections.map((section) => (
+              <SortableSidebarItem
+                key={section.id}
+                section={section}
+                isSelected={selectedSectionId === section.id}
+                onSelect={() => handleSelect(section.id)}
+                icon={User}
+              />
+            ))}
             <SortableContext
-              items={sections.map((s) => s.id)}
+              items={sortableSections.map((s) => s.id)}
               strategy={verticalListSortingStrategy}
             >
-              {sections.map((section) => {
+              {sortableSections.map((section) => {
                 const Icon = sectionIcons[section.type] || LayoutList;
                 return (
                   <SortableSidebarItem

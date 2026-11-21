@@ -1,5 +1,5 @@
 import { resumeRepository } from '@/lib/db/repositories/resume.repository';
-import { BACKGROUND_TEMPLATES } from '@/lib/constants';
+import { BACKGROUND_TEMPLATES, buildPageMarginCSS } from '@/lib/constants';
 import type {
   PersonalInfoContent,
   SkillsContent,
@@ -141,7 +141,12 @@ function isDark(hex: string): boolean {
 
 export function buildExportThemeCSS(theme: typeof DEFAULT_THEME, template: string): string {
   const fs = FONT_SIZE_SCALE[theme.fontSize] || FONT_SIZE_SCALE.medium;
-  const m = theme.margin;
+  const m = {
+    top: theme.margin?.top ?? DEFAULT_THEME.margin.top,
+    right: theme.margin?.right ?? DEFAULT_THEME.margin.right,
+    bottom: theme.margin?.bottom ?? DEFAULT_THEME.margin.bottom,
+    left: theme.margin?.left ?? DEFAULT_THEME.margin.left,
+  };
   const sel = '.resume-export';
   const needsPadding = !BACKGROUND_TEMPLATES.has(template);
   const primaryIsDark = isDark(theme.primaryColor);
@@ -162,6 +167,7 @@ export function buildExportThemeCSS(theme: typeof DEFAULT_THEME, template: strin
       --base-margin-left: ${m.left}px;
       --needs-padding: ${needsPadding ? '1' : '0'};
     }
+    ${buildPageMarginCSS(sel, template)}
     ${sel} p, ${sel} li, ${sel} span, ${sel} td, ${sel} a, ${sel} div {
       font-size: ${fs.body} !important;
       line-height: ${theme.lineSpacing} !important;

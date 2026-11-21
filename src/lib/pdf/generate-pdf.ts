@@ -78,11 +78,10 @@ async function getBrowser() {
 interface ShrinkState {
   sectionSpacingDelta: number;   // cumulative px reduction from base
   lineSpacingDelta: number;      // cumulative reduction from base
-  marginDelta: number;           // cumulative px reduction from base
   scalePct: number;              // 100 = no scaling, min 80
 }
 
-function buildShrinkCSS(state: ShrinkState, childPaddingBase = 0, skipBreakRules = false): string {
+function buildShrinkCSS(state: ShrinkState, skipBreakRules = false): string {
   const sel = '.resume-export';
   const rules: string[] = [];
 
@@ -128,30 +127,8 @@ function buildShrinkCSS(state: ShrinkState, childPaddingBase = 0, skipBreakRules
     `);
   }
 
-  // Stage 3: page margin / child padding reduction
-  if (state.marginDelta > 0) {
-    if (childPaddingBase > 0) {
-      // BACKGROUND templates: reduce child div padding (sidebar/content areas)
-      const pt = Math.max(16, childPaddingBase - state.marginDelta);
-      rules.push(`
-        ${sel} > div > div {
-          padding-top: ${pt}px !important;
-          padding-bottom: ${pt}px !important;
-        }
-      `);
-    } else {
-      // Regular templates: top/bottom handled by @page margins (padding is 0),
-      // only reduce left/right padding (more width → text reflows shorter)
-      rules.push(`
-        ${sel} > div {
-          padding-left: calc(var(--base-margin-left) - ${state.marginDelta}px) !important;
-          padding-right: calc(var(--base-margin-right) - ${state.marginDelta}px) !important;
-        }
-      `);
-    }
-  }
-
-  // Stage 4: font size scaling
+  // 页边距始终保留用户配置，压缩只调整模块间距、行高和字号。
+  // Stage 3: font size scaling
   if (state.scalePct < 100) {
     const factor = (state.scalePct / 100).toFixed(3);
     rules.push(`
@@ -182,22 +159,16 @@ async function fitContentToOnePage(page: Page): Promise<void> {
   // Read base values from CSS custom properties
   const baseValues = await page.evaluate(() => {
     const el = document.querySelector('.resume-export > div') as HTMLElement | null;
-    if (!el) return { sectionSpacing: 16, lineSpacing: 1.5, marginTop: 20, marginBottom: 20, needsPadding: true, childPaddingTop: 0 };
+    if (!el) return { sectionSpacing: 16, lineSpacing: 1.5, marginTop: 20, marginBottom: 20, needsPadding: true };
     const cs = getComputedStyle(el);
     const needsPadding = cs.getPropertyValue('--needs-padding')?.trim() === '1';
-    // For BACKGROUND templates, read child div padding (sidebar/content areas)
-    let childPaddingTop = 0;
-    if (!needsPadding) {
-      const child = el.querySelector(':scope > div') as HTMLElement | null;
-      if (child) childPaddingTop = parseFloat(getComputedStyle(child).paddingTop) || 0;
-    }
     return {
       sectionSpacing: parseFloat(cs.getPropertyValue('--base-section-spacing')) || 16,
       lineSpacing: parseFloat(cs.getPropertyValue('--base-line-spacing')) || 1.5,
-      marginTop: parseFloat(cs.getPropertyValue('--base-margin-top')) || 20,
-      marginBottom: parseFloat(cs.getPropertyValue('--base-margin-bottom')) || 20,
+      // 变量由导出主题 CSS 逐方向补齐；直接解析以保留用户设置的 0。
+      marginTop: parseFloat(cs.getPropertyValue('--base-margin-top')),
+      marginBottom: parseFloat(cs.getPropertyValue('--base-margin-bottom')),
       needsPadding,
-      childPaddingTop,
     };
   });
 
@@ -213,17 +184,12 @@ async function fitContentToOnePage(page: Page): Promise<void> {
   const state: ShrinkState = {
     sectionSpacingDelta: 0,
     lineSpacingDelta: 0,
-    marginDelta: 0,
     scalePct: 100,
   };
 
   // Stage limits
   const maxSectionDelta = Math.max(0, baseValues.sectionSpacing - 4);
   const maxLineDelta = Math.max(0, baseValues.lineSpacing - 1.15);
-  // For regular templates: reduce outer div padding; for BACKGROUND: reduce child padding
-  const maxMarginDelta = baseValues.needsPadding
-    ? Math.max(0, baseValues.marginTop - 8)
-    : Math.max(0, Math.round(baseValues.childPaddingTop - 16));
   const minScale = 80;
 
   let stage = 1;
@@ -240,14 +206,11 @@ async function fitContentToOnePage(page: Page): Promise<void> {
       );
       if (state.lineSpacingDelta >= +maxLineDelta.toFixed(2)) stage = 3;
     } else if (stage === 3) {
-      state.marginDelta = Math.min(state.marginDelta + 4, maxMarginDelta);
-      if (state.marginDelta >= maxMarginDelta) stage = 4;
-    } else if (stage === 4) {
       state.scalePct = Math.max(state.scalePct - 5, minScale);
-      if (state.scalePct <= minScale) stage = 5; // exhausted
+      if (state.scalePct <= minScale) stage = 4; // exhausted
     }
 
-    const css = buildShrinkCSS(state, baseValues.needsPadding ? 0 : baseValues.childPaddingTop);
+    const css = buildShrinkCSS(state);
     await page.evaluate((cssText) => {
       let styleEl = document.getElementById('__fit-one-page');
       if (!styleEl) {
@@ -264,32 +227,27 @@ async function fitContentToOnePage(page: Page): Promise<void> {
     const newHeight = await measureHeight(page);
     if (newHeight <= usableHeight) return; // fits now
 
-    if (stage === 5) break; // exhausted all strategies
+    if (stage === 4) break; // exhausted all strategies
   }
 }
 
 /** Auto-shrink content that barely exceeds one page to prevent nearly-blank second pages.
- *  Only activates when content overflows by ≤15%.  Uses light spacing/padding
- *  adjustments (no font scaling, no break-rule changes) so that if it fails,
+ *  Only activates when content overflows by ≤15%. Uses light spacing and font
+ *  adjustments (no page-margin or break-rule changes) so that if it fails,
  *  normal multi-page pagination still works correctly. */
 async function preventNearlyBlankPage(page: Page): Promise<void> {
   const baseValues = await page.evaluate(() => {
     const el = document.querySelector('.resume-export > div') as HTMLElement | null;
-    if (!el) return { sectionSpacing: 16, lineSpacing: 1.5, childPaddingTop: 0, needsPadding: true, marginTop: 20, marginBottom: 20 };
+    if (!el) return { sectionSpacing: 16, lineSpacing: 1.5, needsPadding: true, marginTop: 20, marginBottom: 20 };
     const cs = getComputedStyle(el);
     const needsPadding = cs.getPropertyValue('--needs-padding')?.trim() === '1';
-    let childPaddingTop = 0;
-    if (!needsPadding) {
-      const child = el.querySelector(':scope > div') as HTMLElement | null;
-      if (child) childPaddingTop = parseFloat(getComputedStyle(child).paddingTop) || 0;
-    }
     return {
       sectionSpacing: parseFloat(cs.getPropertyValue('--base-section-spacing')) || 16,
       lineSpacing: parseFloat(cs.getPropertyValue('--base-line-spacing')) || 1.5,
-      childPaddingTop,
       needsPadding,
-      marginTop: parseFloat(cs.getPropertyValue('--base-margin-top')) || 20,
-      marginBottom: parseFloat(cs.getPropertyValue('--base-margin-bottom')) || 20,
+      // 变量由导出主题 CSS 逐方向补齐；直接解析以保留用户设置的 0。
+      marginTop: parseFloat(cs.getPropertyValue('--base-margin-top')),
+      marginBottom: parseFloat(cs.getPropertyValue('--base-margin-bottom')),
     };
   });
 
@@ -305,16 +263,12 @@ async function preventNearlyBlankPage(page: Page): Promise<void> {
   const state: ShrinkState = {
     sectionSpacingDelta: 0,
     lineSpacingDelta: 0,
-    marginDelta: 0,
     scalePct: 100,
   };
 
   // Stage limits — light font scaling (cap at 95%, vs 80% for fitOnePage)
   const maxSectionDelta = Math.max(0, baseValues.sectionSpacing - 4);
   const maxLineDelta = Math.max(0, baseValues.lineSpacing - 1.15);
-  const maxMarginDelta = baseValues.needsPadding
-    ? Math.max(0, baseValues.marginTop - 8)
-    : Math.max(0, Math.round(baseValues.childPaddingTop - 16));
   const minScale = 95; // lighter than fitOnePage (80%)
 
   let stage = 1;
@@ -330,15 +284,12 @@ async function preventNearlyBlankPage(page: Page): Promise<void> {
       );
       if (state.lineSpacingDelta >= +maxLineDelta.toFixed(2)) stage = 3;
     } else if (stage === 3) {
-      state.marginDelta = Math.min(state.marginDelta + 4, maxMarginDelta);
-      if (state.marginDelta >= maxMarginDelta) stage = 4;
-    } else if (stage === 4) {
       state.scalePct = Math.max(state.scalePct - 1, minScale);
       if (state.scalePct <= minScale) break; // exhausted
     }
 
     // skipBreakRules=true: only adjust spacing, don't touch break/overflow behaviour
-    const css = buildShrinkCSS(state, baseValues.needsPadding ? 0 : baseValues.childPaddingTop, true);
+    const css = buildShrinkCSS(state, true);
     await page.evaluate((cssText) => {
       let styleEl = document.getElementById('__prevent-blank');
       if (!styleEl) {

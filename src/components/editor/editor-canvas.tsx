@@ -38,6 +38,8 @@ export function EditorCanvas({
 }: EditorCanvasProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const { setDragging } = useEditorStore();
+  const personalSections = sections.filter((s) => s.type === 'personal_info');
+  const sortableSections = sections.filter((s) => s.type !== 'personal_info');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -59,19 +61,19 @@ export function EditorCanvas({
       setDragging(false);
 
       if (over && active.id !== over.id) {
-        const oldIndex = sections.findIndex((s) => s.id === active.id);
-        const newIndex = sections.findIndex((s) => s.id === over.id);
+        const oldIndex = sortableSections.findIndex((s) => s.id === active.id);
+        const newIndex = sortableSections.findIndex((s) => s.id === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
-          const newSections = [...sections];
+          const newSections = [...sortableSections];
           const [removed] = newSections.splice(oldIndex, 1);
           newSections.splice(newIndex, 0, removed);
-          const reordered = newSections.map((s, i) => ({ ...s, sortOrder: i }));
+          const reordered = [...personalSections, ...newSections].map((s, i) => ({ ...s, sortOrder: i }));
           onReorderSections(reordered);
         }
       }
     },
-    [sections, onReorderSections, setDragging]
+    [personalSections, sortableSections, onReorderSections, setDragging]
   );
 
   const activeSection = activeId ? sections.find((s) => s.id === activeId) : null;
@@ -86,12 +88,23 @@ export function EditorCanvas({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
+            <div className="mb-3 space-y-3 md:mb-4 md:space-y-4">
+              {personalSections.map((section) => (
+                <div key={section.id} data-section-id={section.id}>
+                  <SectionWrapper
+                    section={section}
+                    onUpdate={(content) => onUpdateSection(section.id, content)}
+                    onRemove={() => onRemoveSection(section.id)}
+                  />
+                </div>
+              ))}
+            </div>
             <SortableContext
-              items={sections.map((s) => s.id)}
+              items={sortableSections.map((s) => s.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-3 md:space-y-4">
-                {sections.map((section) => (
+                {sortableSections.map((section) => (
                   <SortableSection key={section.id} id={section.id}>
                     <SectionWrapper
                       section={section}

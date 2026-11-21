@@ -51,6 +51,56 @@ export const BACKGROUND_TEMPLATES: ReadonlySet<string> = new Set([
   'artistic', 'neon', 'berlin', 'engineer', 'sidebar', 'ribbon',
 ]);
 
+/** 预览与导出共用内容边界规则；背景容器保持铺满，仅调整靠纸张边缘的留白。 */
+export function buildPageMarginCSS(scope: string, template: string): string {
+  if (!BACKGROUND_TEMPLATES.has(template)) return '';
+
+  // 背景模板根节点的首/尾 div 分别为页头与正文；整页双栏则对应左右栏。
+  const root = `${scope} > div`;
+  const header = `${root} > div:first-child`;
+  const body = `${root} > div:last-child`;
+  const horizontal = 'padding-left: var(--base-margin-left) !important; padding-right: var(--base-margin-right) !important;';
+  const top = 'padding-top: var(--base-margin-top) !important;';
+  const bottom = 'padding-bottom: var(--base-margin-bottom) !important;';
+
+  if (template === 'two-column' || template === 'sidebar' || template === 'coder') {
+    // 两栏交界处不是页边距，保留各栏原有的内部 padding。
+    return `
+      ${header} { ${top} ${bottom} padding-left: var(--base-margin-left) !important; }
+      ${body} { ${top} ${bottom} padding-right: var(--base-margin-right) !important; }
+    `;
+  }
+
+  if (template === 'compact') {
+    return `
+      ${header} { ${horizontal} ${top} }
+      ${body} > div:first-child { padding-left: var(--base-margin-left) !important; ${bottom} }
+      ${body} > div:last-child { padding-right: var(--base-margin-right) !important; ${bottom} }
+    `;
+  }
+
+  if (template === 'material') {
+    // 卡片外边缘遵循页边距，卡片自身的内容留白不变。
+    return `
+      ${header} { margin-top: var(--base-margin-top) !important; margin-left: var(--base-margin-left) !important; margin-right: var(--base-margin-right) !important; }
+      ${body} { ${horizontal} ${bottom} }
+    `;
+  }
+
+  let css = `
+    ${header} { ${horizontal} ${top} }
+    ${body} { ${horizontal} ${bottom} }
+  `;
+  if (template === 'designer') {
+    // 头像与文字是兄弟节点，将边距放到整个页头，避免头像贴着纸张边缘。
+    css += `
+      ${header} { padding-bottom: 32px; gap: 24px; }
+      ${header} > div:first-child { padding: 0 !important; min-width: 0; }
+    `;
+  }
+  return css;
+}
+
 /** Two-column templates with dark sidebar — sidebar bg + width for QR bar continuity */
 export const TWO_COLUMN_TEMPLATES: Record<string, { bg: string; width: string }> = {
   'two-column': { bg: '#16213e', width: '35%' },

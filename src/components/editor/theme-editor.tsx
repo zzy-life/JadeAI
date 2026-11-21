@@ -267,6 +267,13 @@ export function ThemeEditor({ onClose }: ThemeEditorProps) {
   const themeConfig: ThemeConfig = {
     ...DEFAULT_THEME,
     ...(currentResume?.themeConfig || {}),
+    // 按方向补齐历史配置，显式的 0 边距不能被默认值覆盖。
+    margin: {
+      top: currentResume?.themeConfig?.margin?.top ?? DEFAULT_THEME.margin.top,
+      right: currentResume?.themeConfig?.margin?.right ?? DEFAULT_THEME.margin.right,
+      bottom: currentResume?.themeConfig?.margin?.bottom ?? DEFAULT_THEME.margin.bottom,
+      left: currentResume?.themeConfig?.margin?.left ?? DEFAULT_THEME.margin.left,
+    },
   };
 
   const updateTheme = useCallback(

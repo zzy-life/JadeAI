@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Camera, X, Circle, RectangleVertical } from 'lucide-react';
 import { EditableText } from '../fields/editable-text';
@@ -36,6 +36,9 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d')!;
+        // JPEG 不支持透明通道，先铺白底，避免透明头像导出后变黑。
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
         resolve(canvas.toDataURL('image/jpeg', 0.85));
       };
@@ -52,6 +55,7 @@ export function PersonalInfoSection({ section, onUpdate }: Props) {
   const tTheme = useTranslations('themeEditor');
   const content = section.content as PersonalInfoContent;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState('');
   const { currentResume } = useResumeStore();
   const avatarStyle = currentResume?.themeConfig?.avatarStyle || 'oneInch';
 
@@ -68,11 +72,25 @@ export function PersonalInfoSection({ section, onUpdate }: Props) {
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError('');
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await resizeImage(file, 200);
-    onUpdate({ avatar: dataUrl });
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    try {
+      if (!file.type.startsWith('image/')) {
+        setUploadError(t('avatarInvalidType'));
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError(t('avatarTooLarge'));
+        return;
+      }
+      const dataUrl = await resizeImage(file, 200);
+      onUpdate({ avatar: dataUrl });
+    } catch {
+      setUploadError(t('avatarReadFailed'));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -132,6 +150,8 @@ export function PersonalInfoSection({ section, onUpdate }: Props) {
           className="hidden"
         />
       </div>
+
+      {uploadError && <p role="alert" className="text-sm text-red-500">{uploadError}</p>}
 
       <FieldWrapper>
         <EditableText label={t('fullName')} value={content.fullName} onChange={(v) => onUpdate({ fullName: v })} />
