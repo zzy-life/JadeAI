@@ -117,7 +117,9 @@ function SectionContent({ section, lang }: { section: any; lang?: string }) {
                 {item.institution && <span className="text-sm text-zinc-600"> - {item.institution}</span>}
                 {item.location && <span className="text-sm text-zinc-400"> , {item.location}</span>}
               </div>
-              <span className="text-xs text-zinc-400">{item.startDate} - {item.endDate || (lang === 'zh' ? '至今' : 'Present')}</span>
+              {(item.startDate || item.endDate) && (
+                <span className="text-xs text-zinc-400">{[item.startDate, item.endDate].filter(Boolean).join(' - ')}</span>
+              )}
             </div>
             {item.gpa && <p className="text-sm text-zinc-500">GPA: {item.gpa}</p>}
             {item.highlights?.length > 0 && (
@@ -155,10 +157,8 @@ function SectionContent({ section, lang }: { section: any; lang?: string }) {
           <div key={item.id}>
             <div className="flex items-baseline justify-between">
               <span className="font-semibold text-zinc-800 text-sm">{item.name}</span>
-              {item.startDate && (
-                <span className="text-xs text-zinc-400">
-                  {item.startDate} - {item.endDate || (lang === 'zh' ? '至今' : 'Present')}
-                </span>
+              {(item.startDate || item.endDate) && (
+                <span className="text-xs text-zinc-400">{[item.startDate, item.endDate].filter(Boolean).join(' - ')}</span>
               )}
             </div>
             {item.description && <p className="mt-1 text-sm text-zinc-600" dangerouslySetInnerHTML={{ __html: md(item.description) }} />}

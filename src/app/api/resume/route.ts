@@ -3,6 +3,7 @@ import { resumeRepository } from '@/lib/db/repositories/resume.repository';
 import { resolveUser, getUserIdFromRequest } from '@/lib/auth/helpers';
 import { DEFAULT_SECTIONS } from '@/lib/constants';
 import { collectResumeChange } from '@/lib/resume/desktop-collector';
+import { resumeCreateSchema } from '@/lib/resume/create-schema';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,27 +29,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { title, template, language, sections, themeConfig } = body;
+    const body = await request.json().catch(() => null);
+    const parsed = resumeCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid resume data' }, { status: 400 });
+    }
+    const { title, template, language, sections, themeConfig } = parsed.data;
 
     const resume = await resumeRepository.create({
       userId: user.id,
       title: title || '未命名简历',
       template: template || 'classic',
       language: language || 'zh',
-      ...(themeConfig ? { themeConfig } : {}),
+      ...(themeConfig !== undefined ? { themeConfig } : {}),
     });
 
     if (resume) {
-      if (Array.isArray(sections) && sections.length > 0) {
-        // Import mode: use provided sections, ignore original ids
-        for (let i = 0; i < sections.length; i++) {
-          const s = sections[i];
+      if (sections !== undefined) {
+        // 显式传入空数组时保留空备份；只在未提供 sections 的模板创建中补空白模块。
+        const orderedSections = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
+        for (const s of orderedSections) {
           await resumeRepository.createSection({
             resumeId: resume.id,
             type: s.type,
             title: s.title,
-            sortOrder: i,
+            sortOrder: s.sortOrder,
             visible: s.visible,
             content: s.content,
           });

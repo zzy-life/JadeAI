@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus, Search, LayoutGrid, List, Sparkles, Upload } from 'lucide-react';
+import { Plus, Search, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,8 +20,6 @@ import { useRuntimeConfig } from '@/components/providers/runtime-config-provider
 import { ResumeGrid } from '@/components/dashboard/resume-grid';
 import { ResumeListItem } from '@/components/dashboard/resume-list-item';
 import { CreateResumeDialog } from '@/components/dashboard/create-resume-dialog';
-import { GenerateResumeDialog } from '@/components/dashboard/generate-resume-dialog';
-import { ImportJsonDialog } from '@/components/dashboard/import-json-dialog';
 import { ShareDialog } from '@/components/editor/share-dialog';
 import { SettingsDialog } from '@/components/settings/settings-dialog';
 import { TourOverlay, type TourStepConfig } from '@/components/tour/tour-overlay';
@@ -34,7 +32,6 @@ type ViewMode = 'grid' | 'list';
 
 const DASHBOARD_TOUR_STEPS: TourStepConfig[] = [
   { target: 'dash-create', placement: 'bottom', i18nKey: 'dashCreate' },
-  { target: 'dash-ai-generate', placement: 'bottom', i18nKey: 'dashAiGenerate' },
   { target: 'dash-search', placement: 'bottom', i18nKey: 'dashSearch' },
   { target: 'dash-templates', placement: 'bottom', i18nKey: 'dashTemplates' },
 ];
@@ -79,15 +76,16 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [shareResumeId, setShareResumeId] = useState<string | null>(null);
   const startTour = useTourStore((s) => s.startTour);
+  const dismissTour = useTourStore((s) => s.dismiss);
 
-  // Auto-start dashboard tour for first-time users
+  // 创建与设置期间不启动引导，避免引导遮罩盖住当前步骤。
   useEffect(() => {
-    if (isLoading || fpLoading) return;
+    if (isLoading || fpLoading || activeModal !== null) return;
     if (hasCompletedTour('dashboard')) return;
     if (window.innerWidth < 768) return;
     const timer = setTimeout(() => startTour('dashboard', DASHBOARD_TOUR_STEPS.length), 800);
     return () => clearTimeout(timer);
-  }, [isLoading, fpLoading, startTour]);
+  }, [isLoading, fpLoading, activeModal, startTour]);
 
   // Hydrate view preference from localStorage on mount
   useEffect(() => {
@@ -144,33 +142,17 @@ export default function DashboardPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            data-tour="dash-ai-generate"
-            variant="outline"
-            onClick={() => openModal('generate-resume')}
-            className="cursor-pointer gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('aiGenerate')}</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => openModal('import')}
-            className="cursor-pointer gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('importJson')}</span>
-          </Button>
-          <Button
-            data-tour="dash-create"
-            onClick={() => openModal('create-resume')}
-            className="cursor-pointer gap-2 bg-brand hover:bg-brand-hover"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('createResume')}</span>
-          </Button>
-        </div>
+        <Button
+          data-tour="dash-create"
+          onClick={() => {
+            dismissTour();
+            openModal('create-resume');
+          }}
+          className="shrink-0 cursor-pointer gap-2 bg-brand hover:bg-brand-hover"
+        >
+          <Plus className="h-4 w-4" />
+          <span>{t('createResume')}</span>
+        </Button>
       </div>
 
       {/* Toolbar: Search + Sort + View toggle */}
@@ -285,15 +267,7 @@ export default function DashboardPage() {
         open={activeModal === 'create-resume'}
         onClose={closeModal}
         onCreate={createResume}
-      />
-      <GenerateResumeDialog
-        open={activeModal === 'generate-resume'}
-        onOpenChange={(open) => open ? openModal('generate-resume') : closeModal()}
         onCreated={fetchResumes}
-      />
-      <ImportJsonDialog
-        open={activeModal === 'import'}
-        onOpenChange={(open) => open ? openModal('import') : closeModal()}
       />
       <SettingsDialog />
       {shareResumeId && (

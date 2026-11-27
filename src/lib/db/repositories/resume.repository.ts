@@ -3,7 +3,7 @@ import { db } from '../index';
 import { resumes, resumeSections } from '../schema';
 import { resolveDatabaseKind } from '../database-kind';
 
-interface JdOptimizedSection {
+interface ResumeSectionInput {
   type: string;
   title: string;
   sortOrder: number;
@@ -58,6 +58,25 @@ export const resumeRepository = {
     return this.findById(id);
   },
 
+  async createWithSections(data: {
+    userId: string;
+    title: string;
+    template: string;
+    language: string;
+    sections: ResumeSectionInput[];
+  }) {
+    const id = crypto.randomUUID();
+    await insertResumeWithSections(
+      { id, userId: data.userId, title: data.title, template: data.template, language: data.language },
+      data.sections.map((section) => ({
+        ...section,
+        id: crypto.randomUUID(),
+        resumeId: id,
+      })),
+    );
+    return this.findById(id);
+  },
+
   async update(id: string, data: Partial<{ title: string; template: string; themeConfig: unknown; language: string }>) {
     await db.update(resumes).set({ ...data, updatedAt: new Date() } as any).where(eq(resumes.id, id));
     return this.findById(id);
@@ -71,7 +90,7 @@ export const resumeRepository = {
     language: string;
     sourceResumeId: string;
     targetJobDescription: string;
-    sections: JdOptimizedSection[];
+    sections: ResumeSectionInput[];
   }) {
     const id = crypto.randomUUID();
 
@@ -122,7 +141,7 @@ export const resumeRepository = {
         sourceResumeId: original.sourceResumeId,
         targetJobDescription: original.targetJobDescription,
       },
-      original.sections.map((section: JdOptimizedSection) => ({
+      original.sections.map((section: ResumeSectionInput) => ({
         id: crypto.randomUUID(),
         resumeId: newId,
         type: section.type,

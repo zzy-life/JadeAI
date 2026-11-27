@@ -1,317 +1,115 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
-import { Loader2, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { Check, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LanguageSelect } from '@/components/ui/language-select';
-import { TEMPLATES } from '@/lib/constants';
-import { TemplateThumbnail } from './template-thumbnail';
-import { templateLabelsMap } from '@/lib/template-labels';
-import { getAIHeaders } from '@/stores/settings-store';
+import { cn } from '@/lib/utils';
+import { RESUME_INTAKE_LIMITS } from '@/lib/ai/resume-intake-schema';
+import type { useResumeIntake } from '@/hooks/use-resume-intake';
 
-interface GenerateResumeDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: () => void;
+interface ResumeIntakeChatProps {
+  intake: ReturnType<typeof useResumeIntake>;
+  configured: boolean;
+  generating: boolean;
+  generationError: string;
+  onGenerate: () => void;
 }
 
-type GenerateState = 'form' | 'generating' | 'success' | 'error';
-
-export function GenerateResumeDialog({ open, onOpenChange, onCreated }: GenerateResumeDialogProps) {
+export function ResumeIntakeChat({ intake, configured, generating, generationError, onGenerate }: ResumeIntakeChatProps) {
   const t = useTranslations('generateResume');
-  const tGlobal = useTranslations();
-  const locale = useLocale();
-  const router = useRouter();
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const { messages, basicInfo, draft, setDraft, isReplying, needsReply, canGenerate, error, send, retry } = intake;
+  const missing = [];
+  if (!basicInfo.fullName) missing.push(t('fullName'));
+  if (!basicInfo.jobTitle) missing.push(t('jobTitle'));
+  let status = t('readyHint');
+  if (missing.length > 0) status = t('missingHint', { fields: missing.join(' / ') });
+  if (draft.trim()) status = t('unsentHint');
+  if (needsReply && !isReplying) status = t('retryHint');
+  if (isReplying) status = t('replying');
+  if (generating) status = t('generating');
 
-  const [jobTitle, setJobTitle] = useState('');
-  const [yearsOfExperience, setYearsOfExperience] = useState<number | ''>('');
-  const [skills, setSkills] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [experience, setExperience] = useState('');
-  const [template, setTemplate] = useState('classic');
-  const [language, setLanguage] = useState(locale);
-  const [state, setState] = useState<GenerateState>('form');
-  const [error, setError] = useState('');
-  const [result, setResult] = useState<{ resumeId: string; title: string } | null>(null);
-
-  const handleGenerate = async () => {
-    if (!jobTitle.trim()) return;
-    setState('generating');
-    setError('');
-
-    try {
-      const fingerprint = typeof window !== 'undefined' ? localStorage.getItem('jade_fingerprint') : null;
-      const res = await fetch('/api/ai/generate-resume', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(fingerprint ? { 'x-fingerprint': fingerprint } : {}),
-          ...getAIHeaders(),
-        },
-        body: JSON.stringify({
-          jobTitle: jobTitle.trim(),
-          yearsOfExperience: yearsOfExperience === '' ? undefined : yearsOfExperience,
-          skills: skills.trim()
-            ? skills.split(/[\s,，、]+/).map(s => s.trim()).filter(Boolean)
-            : undefined,
-          industry: industry.trim() || undefined,
-          experience: experience.trim() || undefined,
-          template,
-          language,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Generation failed');
-      }
-
-      const data = await res.json();
-      setResult(data);
-      setState('success');
-      onCreated?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate resume');
-      setState('error');
-    }
-  };
-
-  const handleOpenResume = () => {
-    if (result) {
-      onOpenChange(false);
-      router.push(`/editor/${result.resumeId}`);
-    }
-  };
-
-  const handleRetry = () => {
-    setState('form');
-    setError('');
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
-    setTimeout(() => {
-      setState('form');
-      setJobTitle('');
-      setYearsOfExperience('');
-      setSkills('');
-      setIndustry('');
-      setExperience('');
-      setTemplate('classic');
-      setLanguage(locale);
-      setError('');
-      setResult(null);
-    }, 200);
-  };
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [messages, isReplying, error, generationError]);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-brand" />
-            {t('title')}
-          </DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
-        </DialogHeader>
-
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-4">
-          {state === 'form' && (
-            <>
-              {/* Row 1: Job Title + Years + Industry */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {t('jobTitle')} *
-                  </label>
-                  <Input
-                    value={jobTitle}
-                    onChange={(e) => setJobTitle(e.target.value)}
-                    placeholder={t('jobTitle')}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {t('yearsOfExperience')}
-                  </label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={50}
-                    value={yearsOfExperience}
-                    onChange={(e) => setYearsOfExperience(e.target.value ? Number(e.target.value) : '')}
-                    placeholder="3"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {t('industry')}
-                  </label>
-                  <Input
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    placeholder={t('industry')}
-                  />
-                </div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* 收集状态与制作按钮在滚动区之外，手机长对话也能随时看到门槛。 */}
+      <section aria-label={t('collectedInfo')} className="shrink-0 border-y border-zinc-100 bg-brand-muted/20 px-6 py-3 dark:border-zinc-800">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <dl className="flex min-w-0 flex-1 flex-wrap gap-x-5 gap-y-2 text-sm">
+            {(['fullName', 'jobTitle'] as const).map((field) => (
+              <div key={field} className="min-w-0">
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">{t(field)}</dt>
+                <dd className="mt-1 flex items-start gap-1 break-words font-medium [overflow-wrap:anywhere]">
+                  {basicInfo[field] && <Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />}
+                  {basicInfo[field] || t('notProvided')}
+                </dd>
               </div>
-
-              {/* Skills */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {t('skills')}
-                </label>
-                <Input
-                  value={skills}
-                  onChange={(e) => setSkills(e.target.value)}
-                  placeholder={t('skillsPlaceholder')}
-                />
-              </div>
-
-              {/* Work Experience */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {t('experience')}
-                </label>
-                <Textarea
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  placeholder={t('experiencePlaceholder')}
-                  rows={4}
-                  className="resize-none"
-                />
-              </div>
-
-              {/* Row 2: Language + Template */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {t('language')}
-                  </label>
-                  <LanguageSelect value={language} onValueChange={setLanguage} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {t('template')}
-                  </label>
-                  <Select value={template} onValueChange={setTemplate}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-64">
-                      {TEMPLATES.map((tpl) => (
-                        <SelectItem key={tpl} value={tpl}>
-                          <span className="flex items-center gap-2">
-                            <TemplateThumbnail template={tpl} className="h-8 w-6 shrink-0 rounded-sm ring-1 ring-zinc-200/50" />
-                            {tGlobal(templateLabelsMap[tpl])}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </>
-          )}
-
-          {state === 'generating' && (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-brand mb-3" />
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('generating')}
-              </p>
-            </div>
-          )}
-
-          {state === 'success' && (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <CheckCircle2 className="h-8 w-8 text-green-500 mb-3" />
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('success')}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                {t('successDescription')}
-              </p>
-            </div>
-          )}
-
-          {state === 'error' && (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <AlertTriangle className="h-8 w-8 text-red-500 mb-3" />
-              <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                {error || t('error')}
-              </p>
-            </div>
-          )}
+            ))}
+          </dl>
+          <Button
+            disabled={!configured || !canGenerate || generating}
+            aria-describedby="resume-intake-status"
+            onClick={onGenerate}
+            className="shrink-0 cursor-pointer bg-brand hover:bg-brand-hover"
+          >
+            {generating ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+            {generating ? t('generating') : t('generate')}
+          </Button>
         </div>
+        <p id="resume-intake-status" role="status" className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">{status}</p>
+      </section>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
-          {state === 'form' && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleClose}
-                className="cursor-pointer"
-              >
-                {t('close')}
-              </Button>
-              <Button
-                onClick={handleGenerate}
-                disabled={!jobTitle.trim()}
-                className="cursor-pointer bg-brand hover:bg-brand-hover"
-              >
-                {t('generate')}
-              </Button>
-            </>
-          )}
-          {state === 'success' && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleClose}
-                className="cursor-pointer"
-              >
-                {t('close')}
-              </Button>
-              <Button
-                onClick={handleOpenResume}
-                className="cursor-pointer bg-brand hover:bg-brand-hover"
-              >
-                {t('openResume')}
-              </Button>
-            </>
-          )}
-          {state === 'error' && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleClose}
-                className="cursor-pointer"
-              >
-                {t('close')}
-              </Button>
-              <Button
-                onClick={handleRetry}
-                className="cursor-pointer bg-brand hover:bg-brand-hover"
-              >
-                {t('generate')}
-              </Button>
-            </>
-          )}
+      <div role="log" aria-label={t('conversation')} aria-busy={isReplying} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+        <div className="max-w-[92%] rounded-xl rounded-tl-sm bg-zinc-100 px-4 py-3 text-sm leading-relaxed dark:bg-zinc-800">
+          <p className="mb-1 text-xs font-medium text-brand">{t('assistant')}</p>
+          <p>{t('welcome')}</p>
         </div>
-      </DialogContent>
-    </Dialog>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={cn('w-fit max-w-[92%] rounded-xl px-4 py-3 text-sm leading-relaxed',
+              message.role === 'user' ? 'ml-auto rounded-tr-sm bg-brand-muted/60' : 'rounded-tl-sm bg-zinc-100 dark:bg-zinc-800')}
+          >
+            <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">{message.role === 'user' ? t('you') : t('assistant')}</p>
+            <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.content}</p>
+          </div>
+        ))}
+        {isReplying && <p role="status" className="flex items-center gap-2 text-sm text-zinc-500"><Loader2 className="h-4 w-4 animate-spin" />{t('replying')}</p>}
+        {error && (
+          <div role="alert" className="space-y-2 text-sm text-red-600 dark:text-red-400">
+            <p>{error}</p>
+            {needsReply && <Button variant="outline" disabled={!configured || isReplying || generating} onClick={() => void retry()}>{t('retryReply')}</Button>}
+          </div>
+        )}
+        {generationError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{generationError}</p>}
+        <div ref={bottomRef} />
+      </div>
+
+      <form onSubmit={(event) => { event.preventDefault(); void send(); }} className="shrink-0 space-y-2 border-t border-zinc-100 px-6 py-3 dark:border-zinc-800">
+        <label htmlFor="resume-intake-message" className="sr-only">{t('inputLabel')}</label>
+        <div className="flex items-end gap-2">
+          <Textarea
+            id="resume-intake-message"
+            aria-describedby="resume-intake-privacy"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            disabled={isReplying || generating || needsReply}
+            maxLength={RESUME_INTAKE_LIMITS.maxMessageLength}
+            rows={2}
+            placeholder={t('placeholder')}
+            className="max-h-32 min-h-16 resize-none"
+          />
+          <Button type="submit" disabled={!configured || !draft.trim() || isReplying || generating || needsReply} className="cursor-pointer bg-brand hover:bg-brand-hover">
+            <Send className="mr-1.5 h-4 w-4" />{t('send')}
+          </Button>
+        </div>
+        <p id="resume-intake-privacy" className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{t('privacyHint')}</p>
+      </form>
+    </div>
   );
 }
