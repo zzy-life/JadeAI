@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { ArrowLeft, Undo2, Redo2, Download, Upload, Settings, Palette, Save, FileSearch, Languages, FileText, SpellCheck, Share2, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Undo2, Redo2, Download, Settings, Palette, Save, FileSearch, Languages, FileText, SpellCheck, Share2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -114,16 +114,6 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => openModal('import')}
-            className="cursor-pointer"
-            title={t('import')}
-          >
-            <Upload className="h-4 w-4" />
-            <span className="ml-1 text-xs hidden sm:inline">{t('import')}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             onClick={() => openModal('share')}
             className="cursor-pointer"
             title={t('share')}
@@ -196,10 +186,6 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
               <DropdownMenuItem onClick={() => openModal('export')}>
                 <Download className="mr-2 h-4 w-4" />
                 {t('exportPdf')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('import')}>
-                <Upload className="mr-2 h-4 w-4" />
-                {t('import')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal('share')}>
                 <Share2 className="mr-2 h-4 w-4" />

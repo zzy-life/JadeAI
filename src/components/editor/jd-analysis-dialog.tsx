@@ -114,7 +114,7 @@ function ScoreCircle({ score, label, size = 'lg' }: { score: number; label: stri
           </span>
         </div>
       </div>
-      {!isSm && <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</span>}
+      {!isSm && <span className="max-w-32 text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</span>}
     </div>
   );
 }
@@ -720,12 +720,12 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                               <span className="text-xs text-zinc-400 dark:text-zinc-500">
                                 {formatDate(item.createdAt)}
                               </span>
-                              <Badge variant="secondary" className="text-xs">
-                                ATS {item.atsScore}
+                              <Badge variant="secondary" className="max-w-full shrink whitespace-normal text-xs">
+                                {t('atsScore')} {item.atsScore}
                               </Badge>
                             </div>
                             <p className="text-sm text-zinc-600 dark:text-zinc-400 truncate mt-0.5">

@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       aiConfig,
     );
     const title = sourceResume.language === 'en'
-      ? `${optimized.targetRole} - JD Optimized`
-      : `${optimized.targetRole} - JD优化`;
+      ? `${optimized.targetRole} - Job-Tailored Resume`
+      : `${optimized.targetRole} - 岗位优化版`;
 
     const created = await resumeRepository.createJdOptimized({
       userId: user.id,
