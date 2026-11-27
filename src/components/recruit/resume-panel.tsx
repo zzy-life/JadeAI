@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ResumeDropzone } from './resume-dropzone';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import type { RecruitCandidate } from '@/types/recruit';
 
 interface ResumePanelProps {
@@ -19,12 +20,14 @@ interface ResumePanelProps {
 
 export function ResumePanel({ candidate, onUpdated }: ResumePanelProps) {
   const t = useTranslations('recruit');
+  const { ensureAIConfig } = useAIConfig();
   const { fingerprint } = useFingerprint();
   const [uploading, setUploading] = useState(false);
   const [text, setText] = useState(candidate.resumeText);
   const [saving, setSaving] = useState(false);
 
   async function handleFile(file: File) {
+    if (!ensureAIConfig()) return;
     setUploading(true);
     try {
       const formData = new FormData();

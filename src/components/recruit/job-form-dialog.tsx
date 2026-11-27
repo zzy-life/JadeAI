@@ -19,6 +19,7 @@ import { interviewDimensions } from '@/lib/recruit/dimensions';
 import { detectGoRole } from '@/lib/ai/recruit-blueprint';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import {
   type DimensionConfig,
   type RecruitJob,
@@ -34,6 +35,7 @@ interface JobFormDialogProps {
 
 export function JobFormDialog({ open, onOpenChange, job, onSaved }: JobFormDialogProps) {
   const t = useTranslations('recruit');
+  const { ensureAIConfig } = useAIConfig();
   const tDim = useTranslations('recruit.dimensions');
   const { fingerprint } = useFingerprint();
 
@@ -63,6 +65,10 @@ export function JobFormDialog({ open, onOpenChange, job, onSaved }: JobFormDialo
   async function recognizeDimensions() {
     if (!title.trim() || !jobDescription.trim()) {
       toast.error(t('dimensions.needJobInfo'));
+      return;
+    }
+    if (!ensureAIConfig()) {
+      onOpenChange(false);
       return;
     }
     setRecognizing(true);

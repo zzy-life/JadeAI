@@ -147,8 +147,26 @@ function loadApiKeyLocally(): string {
   }
 }
 
-export function hasCompleteAIConfig(config: { aiApiKey: string; aiModel: string }): boolean {
-  return Boolean(config.aiApiKey.trim() && config.aiModel.trim());
+export type AICapability = 'text' | 'image';
+
+type AIConfigFields = Pick<SettingsStore, 'aiApiKey' | 'aiModel'>
+  & Partial<Pick<SettingsStore, 'aiProvider' | 'aiImageModel'>>;
+
+export function getAIConfigIssue(config: AIConfigFields, capability: AICapability = 'text') {
+  if (capability === 'image' && config.aiProvider !== 'openai' && config.aiProvider !== 'gemini') {
+    return 'imageProviderUnsupported';
+  }
+  if (!config.aiApiKey.trim()) return 'apiKeyMissing';
+  if (capability === 'image') {
+    if (!config.aiImageModel?.trim()) return 'imageModelMissing';
+  } else if (!config.aiModel.trim()) {
+    return 'textModelMissing';
+  }
+  return null;
+}
+
+export function hasCompleteAIConfig(config: AIConfigFields, capability: AICapability = 'text'): boolean {
+  return getAIConfigIssue(config, capability) === null;
 }
 
 export function getAIHeaders(): Record<string, string> {

@@ -2,25 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, Loader2, Send, Sparkles } from 'lucide-react';
+import { Check, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { RESUME_INTAKE_LIMITS } from '@/lib/ai/resume-intake-schema';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import type { useResumeIntake } from '@/hooks/use-resume-intake';
 
 interface ResumeIntakeChatProps {
   intake: ReturnType<typeof useResumeIntake>;
-  configured: boolean;
   generating: boolean;
   generationError: string;
-  onGenerate: () => void;
 }
 
-export function ResumeIntakeChat({ intake, configured, generating, generationError, onGenerate }: ResumeIntakeChatProps) {
+export function ResumeIntakeChat({ intake, generating, generationError }: ResumeIntakeChatProps) {
   const t = useTranslations('generateResume');
+  const { isHydrated } = useAIConfig();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { messages, basicInfo, draft, setDraft, isReplying, needsReply, canGenerate, error, send, retry } = intake;
+  const { messages, basicInfo, draft, setDraft, isReplying, needsReply, error, send, retry } = intake;
   const missing = [];
   if (!basicInfo.fullName) missing.push(t('fullName'));
   if (!basicInfo.jobTitle) missing.push(t('jobTitle'));
@@ -37,30 +37,19 @@ export function ResumeIntakeChat({ intake, configured, generating, generationErr
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* 收集状态与制作按钮在滚动区之外，手机长对话也能随时看到门槛。 */}
+      {/* 收集状态保留在滚动区之外，手机长对话也能随时看到制作门槛。 */}
       <section aria-label={t('collectedInfo')} className="shrink-0 border-y border-zinc-100 bg-brand-muted/20 px-6 py-3 dark:border-zinc-800">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <dl className="flex min-w-0 flex-1 flex-wrap gap-x-5 gap-y-2 text-sm">
-            {(['fullName', 'jobTitle'] as const).map((field) => (
-              <div key={field} className="min-w-0">
-                <dt className="text-xs text-zinc-500 dark:text-zinc-400">{t(field)}</dt>
-                <dd className="mt-1 flex items-start gap-1 break-words font-medium [overflow-wrap:anywhere]">
-                  {basicInfo[field] && <Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />}
-                  {basicInfo[field] || t('notProvided')}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <Button
-            disabled={!configured || !canGenerate || generating}
-            aria-describedby="resume-intake-status"
-            onClick={onGenerate}
-            className="shrink-0 cursor-pointer bg-brand hover:bg-brand-hover"
-          >
-            {generating ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
-            {generating ? t('generating') : t('generate')}
-          </Button>
-        </div>
+        <dl className="flex min-w-0 flex-wrap gap-x-5 gap-y-2 text-sm">
+          {(['fullName', 'jobTitle'] as const).map((field) => (
+            <div key={field} className="min-w-0">
+              <dt className="text-xs text-zinc-500 dark:text-zinc-400">{t(field)}</dt>
+              <dd className="mt-1 flex items-start gap-1 break-words font-medium [overflow-wrap:anywhere]">
+                {basicInfo[field] && <Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />}
+                {basicInfo[field] || t('notProvided')}
+              </dd>
+            </div>
+          ))}
+        </dl>
         <p id="resume-intake-status" role="status" className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">{status}</p>
       </section>
 
@@ -83,7 +72,7 @@ export function ResumeIntakeChat({ intake, configured, generating, generationErr
         {error && (
           <div role="alert" className="space-y-2 text-sm text-red-600 dark:text-red-400">
             <p>{error}</p>
-            {needsReply && <Button variant="outline" disabled={!configured || isReplying || generating} onClick={() => void retry()}>{t('retryReply')}</Button>}
+            {needsReply && <Button variant="outline" disabled={!isHydrated || isReplying || generating} onClick={() => void retry()}>{t('retryReply')}</Button>}
           </div>
         )}
         {generationError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{generationError}</p>}
@@ -104,7 +93,7 @@ export function ResumeIntakeChat({ intake, configured, generating, generationErr
             placeholder={t('placeholder')}
             className="max-h-32 min-h-16 resize-none"
           />
-          <Button type="submit" disabled={!configured || !draft.trim() || isReplying || generating || needsReply} className="cursor-pointer bg-brand hover:bg-brand-hover">
+          <Button type="submit" disabled={!isHydrated || !draft.trim() || isReplying || generating || needsReply} className="cursor-pointer bg-brand hover:bg-brand-hover">
             <Send className="mr-1.5 h-4 w-4" />{t('send')}
           </Button>
         </div>

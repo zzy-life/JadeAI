@@ -5,6 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInterviewStore } from '@/stores/interview-store';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useLocale } from 'next-intl';
 
 interface UseInterviewChatOptions {
@@ -15,6 +16,7 @@ interface UseInterviewChatOptions {
 
 export function useInterviewChat({ sessionId, roundId, selectedModel }: UseInterviewChatOptions) {
   const [input, setInput] = useState('');
+  const { ensureAIConfig } = useAIConfig();
   const locale = useLocale();
   const modelRef = useRef(selectedModel);
   modelRef.current = selectedModel;
@@ -39,10 +41,16 @@ export function useInterviewChat({ sessionId, roundId, selectedModel }: UseInter
     [sessionId, locale]
   );
 
-  const { messages, sendMessage, status, error, setMessages } = useChat({
+  const { messages, sendMessage: rawSendMessage, status, error, setMessages } = useChat({
     id: `interview-${sessionId}-${roundId}`,
     transport,
   });
+
+  const sendMessage = useCallback((message: Parameters<typeof rawSendMessage>[0]) => {
+    if (!ensureAIConfig()) return false;
+    void rawSendMessage(message);
+    return true;
+  }, [rawSendMessage, ensureAIConfig]);
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
@@ -66,8 +74,7 @@ export function useInterviewChat({ sessionId, roundId, selectedModel }: UseInter
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!input.trim() || isLoading) return;
-      sendMessage({ text: input });
-      setInput('');
+      if (sendMessage({ text: input })) setInput('');
     },
     [input, sendMessage, isLoading]
   );

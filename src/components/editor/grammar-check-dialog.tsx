@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEditorStore } from '@/stores/editor-store';
 import { useResumeStore } from '@/stores/resume-store';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 
 interface GrammarIssue {
   sectionId: string;
@@ -229,6 +230,7 @@ function GrammarCheckResultView({ result, t }: { result: GrammarCheckResult; t: 
 
 export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarCheckDialogProps) {
   const t = useTranslations('grammarCheck');
+  const { ensureAIConfig } = useAIConfig();
   const ct = useTranslations('common');
   const { setShowAiChat, setPendingAiMessage } = useEditorStore();
   const [isChecking, setIsChecking] = useState(false);
@@ -273,6 +275,7 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
   }, [open, activeTab, fetchHistory]);
 
   const handleCheck = async () => {
+    if (!ensureAIConfig()) return;
     setIsChecking(true);
     setError('');
 
@@ -301,6 +304,7 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
   };
 
   const handleCheckAgain = () => {
+    if (!ensureAIConfig()) return;
     setResult(null);
     setError('');
     handleCheck();
@@ -317,7 +321,7 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
   };
 
   const handleFixAll = () => {
-    if (!result || result.issues.length === 0) return;
+    if (!result || result.issues.length === 0 || !ensureAIConfig()) return;
     const issueList = result.issues
       .map((issue, i) => `${i + 1}. [${issue.sectionTitle}] "${issue.original}" → "${issue.suggestion}"`)
       .join('\n');

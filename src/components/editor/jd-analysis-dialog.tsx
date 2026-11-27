@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useResumeStore } from '@/stores/resume-store';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { MAX_JOB_DESCRIPTION_LENGTH } from '@/lib/ai/jd-analysis-schema';
 
 interface JdAnalysisResult {
@@ -377,6 +378,7 @@ function JdAnalysisResultView({ result, jobDescription, t }: { result: JdAnalysi
 
 export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDialogProps) {
   const t = useTranslations('jdAnalysis');
+  const { ensureAIConfig } = useAIConfig();
   const ct = useTranslations('common');
   const router = useRouter();
   const [jobDescription, setJobDescription] = useState('');
@@ -426,7 +428,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
   }, [open, activeTab, fetchHistory]);
 
   const handleAnalyze = async () => {
-    if (!jobDescription.trim()) return;
+    if (!jobDescription.trim() || !ensureAIConfig()) return;
     setIsAnalyzing(true);
     setError('');
 
@@ -475,7 +477,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
   };
 
   const handleOptimize = async (targetJd: string, targetAnalysis: JdAnalysisResult | null) => {
-    if (!targetJd.trim() || !targetAnalysis || isOptimizing) return;
+    if (!targetJd.trim() || !targetAnalysis || isOptimizing || !ensureAIConfig()) return;
     setIsOptimizing(true);
     setError('');
     try {

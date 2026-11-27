@@ -7,6 +7,8 @@ import { useRouter } from '@/i18n/routing';
 import { useInterviewStore } from '@/stores/interview-store';
 import { useInterviewChat } from '@/hooks/use-interview-chat';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
+import { Button } from '@/components/ui/button';
 import { INIT_TRIGGER } from '@/lib/interview/constants';
 import { isRoundViewOnly } from '@/lib/interview/round-status';
 import { ProgressBar } from './progress-bar';
@@ -41,6 +43,9 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
     useInterviewStore();
   const [showTransition, setShowTransition] = useState(false);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
+  const [needsStart, setNeedsStart] = useState(false);
+  const { isHydrated, ensureAIConfig } = useAIConfig();
+  const selectedModel = useSettingsStore((state) => state.aiModel);
 
   const currentRound = rounds[currentRoundIndex];
   const interviewerConfig = currentRound?.interviewerConfig as InterviewerConfig;
@@ -50,7 +55,7 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
     useInterviewChat({
       sessionId,
       roundId: currentRound?.id || '',
-      selectedModel: useSettingsStore.getState().aiModel,
+      selectedModel,
     });
 
   // Load initial messages from DB on first render
@@ -66,6 +71,7 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
   const sentInitRef = useRef<string | null>(null);
   useEffect(() => {
     if (
+      isHydrated &&
       currentRound &&
       messages.length === 0 &&
       !isLoading &&
@@ -75,9 +81,10 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
       sentInitRef.current !== currentRound.id
     ) {
       sentInitRef.current = currentRound.id;
-      sendMessage({ text: INIT_TRIGGER });
+      const sent = sendMessage({ text: INIT_TRIGGER });
+      setNeedsStart(!sent);
     }
-  }, [currentRound?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentRound?.id, isHydrated, messages.length, isLoading, isViewingHistory, isRoundDone, sendMessage]);
 
   // Auto-set viewing history if round is already done
   useEffect(() => {
@@ -104,6 +111,7 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
     const targetRound = rounds[index];
     if (!targetRound) return;
 
+    setNeedsStart(false);
     setShowTransition(false);
     setCurrentRoundIndex(index);
 
@@ -136,18 +144,21 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
   }, [rounds, sessionId, sessionStatus, setCurrentRoundIndex, setMessages]);
 
   const handleNextRound = useCallback(() => {
+    if (!ensureAIConfig()) return;
+    setNeedsStart(false);
     setShowTransition(false);
     setIsViewingHistory(false);
     advanceToNextRound();
     resetMessages();
     loadedRef.current = false;
     sentInitRef.current = null;
-  }, [advanceToNextRound, resetMessages]);
+  }, [advanceToNextRound, resetMessages, ensureAIConfig]);
 
   const handleGenerateReport = useCallback(async () => {
+    if (!ensureAIConfig()) return;
     setIsGeneratingReport(true);
     router.push(`/interview/${sessionId}/report`);
-  }, [sessionId, router, setIsGeneratingReport]);
+  }, [sessionId, router, setIsGeneratingReport, ensureAIConfig]);
 
   const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
 
@@ -191,6 +202,16 @@ export function InterviewRoom({ sessionId, initialMessages }: InterviewRoomProps
       <ProgressBar onSwitchRound={handleSwitchRound} />
       <InterviewerBanner config={interviewerConfig} questionCount={messages.filter((m) => m.role === 'assistant').length} />
       <MessageList messages={messages} interviewerConfig={interviewerConfig} />
+      {needsStart && messages.length === 0 && (
+        <Button
+          className="mx-auto cursor-pointer"
+          onClick={() => {
+            if (sendMessage({ text: INIT_TRIGGER })) setNeedsStart(false);
+          }}
+        >
+          {t('startRound')}
+        </Button>
+      )}
       {isLoading && (
         <div className="px-4">
           <ThinkingIndicator config={interviewerConfig} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +15,7 @@ import { TemplateThumbnail } from './template-thumbnail';
 import { ImportJsonStep } from './import-json-dialog';
 import { ResumeIntakeChat } from './generate-resume-dialog';
 import { useResumeIntake } from '@/hooks/use-resume-intake';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { ResumeFileUpload } from '@/components/resume/resume-file-upload';
 import { templateLabelsMap } from '@/lib/template-labels';
 import { resumeBackupSchema, type CreateResumeInput, type ResumeBackup } from '@/lib/resume/create-schema';
@@ -42,10 +43,9 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   const aiApiKey = useSettingsStore((state) => state.aiApiKey);
   const aiModel = useSettingsStore((state) => state.aiModel);
   const settingsHydrated = useSettingsStore((state) => state._hydrated);
-  const activeModal = useUIStore((state) => state.activeModal);
-  const openModal = useUIStore((state) => state.openModal);
   const openAISettingsModal = useUIStore((state) => state.openAISettings);
   const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
+  const { ensureAIConfig } = useAIConfig();
   const intake = useResumeIntake(locale, settingsHydrated && hasAIConfig);
   const [step, setStep] = useState<CreationStep>('choose');
   const [title, setTitle] = useState('');
@@ -56,16 +56,7 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   const [busy, setBusy] = useState<BusyState>(null);
   const [error, setError] = useState('');
   const requestInProgressRef = useRef(false);
-  const resumeAfterSettingsRef = useRef(false);
   const isBusy = busy !== null;
-
-  // AI 设置暂时替换创建弹窗；所有步骤输入由本容器持有，返回时原样保留。
-  useEffect(() => {
-    if (resumeAfterSettingsRef.current && activeModal === null) {
-      resumeAfterSettingsRef.current = false;
-      openModal('create-resume');
-    }
-  }, [activeModal, openModal]);
 
   const resetInputs = () => {
     setTitle('');
@@ -95,13 +86,15 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   };
 
   const selectMethod = (nextStep: CreationStep) => {
+    if (nextStep === 'ai' || nextStep === 'upload') {
+      if (!ensureAIConfig()) return;
+    }
     resetInputs();
     setStep(nextStep);
   };
 
   const openAISettings = () => {
     if (requestInProgressRef.current) return;
-    resumeAfterSettingsRef.current = true;
     openAISettingsModal();
   };
 
@@ -167,7 +160,7 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   };
 
   const createFromFile = async () => {
-    if (requestInProgressRef.current || !file || !settingsHydrated || !hasAIConfig) return;
+    if (requestInProgressRef.current || !file || !ensureAIConfig()) return;
     requestInProgressRef.current = true;
     setBusy('parsing');
     setError('');
@@ -196,7 +189,7 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   };
 
   const createWithAI = async () => {
-    if (requestInProgressRef.current || !intake.canGenerate || !settingsHydrated || !hasAIConfig) return;
+    if (requestInProgressRef.current || !intake.canGenerate || !ensureAIConfig()) return;
     requestInProgressRef.current = true;
     setBusy('generating');
     setError('');
@@ -239,7 +232,7 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
 
   let cannotCreate = isBusy;
   if (step === 'backup') cannotCreate = isBusy || !backup || !template;
-  if (step === 'upload') cannotCreate = isBusy || !file || !settingsHydrated || !hasAIConfig;
+  if (step === 'upload') cannotCreate = isBusy || !file || !settingsHydrated;
   const showTemplateSelector = step === 'template' || step === 'upload' || (step === 'backup' && backup !== null);
   const backupTemplateMissing = backup !== null && !TEMPLATES.some((value) => value === backup.template);
 
@@ -276,10 +269,8 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
             )}
             <ResumeIntakeChat
               intake={intake}
-              configured={settingsHydrated && hasAIConfig}
               generating={busy === 'generating'}
               generationError={error}
-              onGenerate={() => void createWithAI()}
             />
           </>
         )}
@@ -388,11 +379,24 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
               <ArrowLeft className="h-4 w-4" />{t('dashboard.creation.back')}
             </Button>
             <div className="ml-auto flex gap-2">
-              {step === 'ai' && <Button variant="ghost" disabled={isBusy} onClick={openAISettings} className="cursor-pointer">{t('generateResume.aiSettings')}</Button>}
-              <Button variant="outline" disabled={isBusy} onClick={() => leave('close')} className="cursor-pointer">{t('common.cancel')}</Button>
-              {step !== 'ai' && <Button disabled={cannotCreate} onClick={submit} className="cursor-pointer bg-brand hover:bg-brand-hover">
-                {isBusy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{actionLabel}
-              </Button>}
+              {step === 'ai' ? (
+                <Button
+                  disabled={!settingsHydrated || !intake.canGenerate || isBusy}
+                  aria-describedby="resume-intake-status"
+                  onClick={() => void createWithAI()}
+                  className="cursor-pointer bg-brand hover:bg-brand-hover"
+                >
+                  {isBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+                  {isBusy ? t('generateResume.generating') : t('generateResume.generate')}
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" disabled={isBusy} onClick={() => leave('close')} className="cursor-pointer">{t('common.cancel')}</Button>
+                  <Button disabled={cannotCreate} onClick={submit} className="cursor-pointer bg-brand hover:bg-brand-hover">
+                    {isBusy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{actionLabel}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}

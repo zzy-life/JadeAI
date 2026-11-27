@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { LanguageSelect } from '@/components/ui/language-select';
 import { cn } from '@/lib/utils';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useResumeStore } from '@/stores/resume-store';
 
 interface CoverLetterDialogProps {
@@ -33,6 +34,7 @@ type Tone = 'formal' | 'friendly' | 'confident';
 
 export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterDialogProps) {
   const t = useTranslations('coverLetter');
+  const { ensureAIConfig } = useAIConfig();
 
   const [jobDescription, setJobDescription] = useState('');
   const [tone, setTone] = useState<Tone>('formal');
@@ -43,7 +45,7 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    if (!jobDescription.trim()) return;
+    if (!jobDescription.trim() || !ensureAIConfig()) return;
     setIsGenerating(true);
     setError('');
 

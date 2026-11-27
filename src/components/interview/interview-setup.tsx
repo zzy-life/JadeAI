@@ -9,10 +9,12 @@ import { ResumeSelector } from './resume-selector';
 import { InterviewerPicker } from './interviewer-picker';
 import { useRouter } from '@/i18n/routing';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import type { InterviewerConfig } from '@/types/interview';
 
 export function InterviewSetup() {
   const t = useTranslations('interview.setup');
+  const { ensureAIConfig } = useAIConfig();
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [jd, setJd] = useState('');
@@ -23,7 +25,7 @@ export function InterviewSetup() {
   const canStart = jd.trim().length > 0 && selectedInterviewers.length > 0;
 
   const handleStart = async () => {
-    if (!canStart) return;
+    if (!canStart || !ensureAIConfig()) return;
     setIsCreating(true);
 
     try {

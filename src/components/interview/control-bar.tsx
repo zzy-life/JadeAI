@@ -5,6 +5,7 @@ import { SkipForward, Lightbulb, Bookmark, BookmarkCheck, StopCircle, Pause } fr
 import { Button } from '@/components/ui/button';
 import { useInterviewStore } from '@/stores/interview-store';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 
 interface ControlBarProps {
   sessionId: string;
@@ -17,6 +18,7 @@ interface ControlBarProps {
 
 export function useInterviewControls({ sessionId, roundId, lastAssistantMessageId, isLoading, onTriggerAI, onEndRound }: ControlBarProps) {
   const t = useTranslations('interview.room');
+  const { ensureAIConfig } = useAIConfig();
   const locale = useLocale();
   const { markedMessages, toggleMark, addHinted, addSkipped } = useInterviewStore();
   const isMarked = lastAssistantMessageId ? markedMessages.has(lastAssistantMessageId) : false;
@@ -35,12 +37,14 @@ export function useInterviewControls({ sessionId, roundId, lastAssistantMessageI
   };
 
   const handleSkip = async () => {
+    if (!ensureAIConfig()) return;
     if (lastAssistantMessageId) addSkipped(lastAssistantMessageId);
     await sendControl('skip');
     onTriggerAI('这个问题我暂时没有太好的思路，能换一个问题吗？');
   };
 
   const handleHint = async () => {
+    if (!ensureAIConfig()) return;
     if (lastAssistantMessageId) addHinted(lastAssistantMessageId);
     await sendControl('hint');
     onTriggerAI('这个问题我不太确定方向，能给我一些思路上的引导吗？');

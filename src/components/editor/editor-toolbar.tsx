@@ -15,6 +15,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useResumeStore } from '@/stores/resume-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 
 interface EditorToolbarProps {
@@ -28,6 +29,12 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
   const { isSaving, isDirty, currentResume, sections, reorderSections, save } = useResumeStore();
   const { openModal } = useUIStore();
   const autoSave = useSettingsStore((s) => s.autoSave);
+  const { ensureAIConfig } = useAIConfig();
+
+  const openAIAction = (modal: 'translate' | 'cover-letter') => {
+    if (!ensureAIConfig()) return;
+    openModal(modal);
+  };
 
   const handleUndo = () => {
     const snapshot = undo();
@@ -135,7 +142,7 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => openModal('translate')}
+            onClick={() => openAIAction('translate')}
             className="cursor-pointer"
             title={t('translate')}
           >
@@ -145,7 +152,7 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => openModal('cover-letter')}
+            onClick={() => openAIAction('cover-letter')}
             className="cursor-pointer"
             title={t('coverLetter')}
           >
@@ -195,11 +202,11 @@ export function EditorToolbar({ resumeId }: EditorToolbarProps) {
                 <FileSearch className="mr-2 h-4 w-4" />
                 {t('jdAnalysis')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('translate')}>
+              <DropdownMenuItem onClick={() => openAIAction('translate')}>
                 <Languages className="mr-2 h-4 w-4" />
                 {t('translate')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('cover-letter')}>
+              <DropdownMenuItem onClick={() => openAIAction('cover-letter')}>
                 <FileText className="mr-2 h-4 w-4" />
                 {t('coverLetter')}
               </DropdownMenuItem>

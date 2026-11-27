@@ -51,6 +51,7 @@ import { CandidateDialog } from './candidate-dialog';
 import { CandidateCompareTable } from './candidate-compare-table';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { sortCandidatesForSidebar } from '@/lib/recruit/summary';
 import { stageFromSummary, type CandidateStage } from '@/lib/recruit/candidate-stage';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,7 @@ import type { CandidateSummary, DimensionConfig, RecruitJob } from '@/types/recr
 
 export function CandidateList({ jobId }: { jobId: string }) {
   const t = useTranslations('recruit');
+  const { ensureAIConfig } = useAIConfig();
   const tc = useTranslations('common');
   const router = useRouter();
   const { fingerprint, isLoading: fpLoading } = useFingerprint();
@@ -121,6 +123,7 @@ export function CandidateList({ jobId }: { jobId: string }) {
 
   /** 有简历但没题目：就地出题，完了直接进面试台 */
   async function handleGenerate(id: string) {
+    if (!ensureAIConfig()) return;
     setGeneratingFor(id);
     try {
       const res = await fetch(`/api/recruit/candidates/${id}/questions`, {

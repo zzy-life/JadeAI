@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { Resume } from '@/types/resume';
 import { getAIHeaders, migrateLegacyGeminiConfig, useSettingsStore } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useUIStore } from '@/stores/ui-store';
 
 const LEGACY_API_KEY_STORAGE_KEY = 'jade_nanobanana_api_key';
@@ -123,14 +124,10 @@ function resizeDataUrl(
 export default function LinkedInPhotoPage() {
   const t = useTranslations('linkedinPhoto');
   const aiProvider = useSettingsStore((state) => state.aiProvider);
-  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
   const aiImageModel = useSettingsStore((state) => state.aiImageModel);
-  const settingsHydrated = useSettingsStore((state) => state._hydrated);
+  const { isHydrated: settingsHydrated, hasAIConfig: hasImageGenerationConfig, ensureAIConfig } = useAIConfig({ capability: 'image' });
   const openAISettings = useUIStore((state) => state.openAISettings);
   const supportsImageGeneration = aiProvider === 'gemini' || aiProvider === 'openai';
-  const hasImageGenerationConfig = Boolean(
-    settingsHydrated && supportsImageGeneration && aiApiKey.trim() && aiImageModel.trim()
-  );
 
   // Upload
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -302,10 +299,7 @@ export default function LinkedInPhotoPage() {
 
   // Generate
   const handleGenerate = async () => {
-    if (!hasImageGenerationConfig) {
-      toast.error(t('errorNoImageModel'));
-      return;
-    }
+    if (!ensureAIConfig()) return;
     if (!uploadedImage) {
       toast.error(t('errorNoImage'));
       return;
@@ -678,7 +672,7 @@ export default function LinkedInPhotoPage() {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !hasImageGenerationConfig || !uploadedImage}
+            disabled={isGenerating || !settingsHydrated || !uploadedImage}
             className="w-full cursor-pointer gap-2 bg-brand py-6 text-base font-medium hover:bg-brand-hover disabled:opacity-50"
           >
             {isGenerating ? (

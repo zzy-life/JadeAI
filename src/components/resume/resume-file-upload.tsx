@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, FileText, Image, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { hasCompleteAIConfig, useSettingsStore } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useUIStore } from '@/stores/ui-store';
 
 const ACCEPTED_EXTENSIONS = '.pdf,.png,.jpg,.jpeg,.webp';
@@ -31,11 +31,8 @@ export function ResumeFileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
-  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
-  const aiModel = useSettingsStore((state) => state.aiModel);
-  const settingsHydrated = useSettingsStore((state) => state._hydrated);
+  const { isHydrated: settingsHydrated, hasAIConfig } = useAIConfig();
   const openAISettings = useUIStore((state) => state.openAISettings);
-  const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
   const fileSelectionDisabled = disabled || !settingsHydrated || !hasAIConfig;
 
   const selectFile = (selectedFile: File) => {

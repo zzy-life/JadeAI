@@ -1,52 +1,73 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { InterviewReportView } from '@/components/interview/interview-report';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSettingsStore, getAIHeaders } from '@/stores/settings-store';
+import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import type { InterviewReport, InterviewSession } from '@/types/interview';
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations('ai.config');
   const [report, setReport] = useState<InterviewReport | null>(null);
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const hydrated = useSettingsStore((s) => s._hydrated);
+  const [needsConfig, setNeedsConfig] = useState(false);
+  const { isHydrated, ensureAIConfig } = useAIConfig();
+
+  const generateReport = useCallback(async () => {
+    if (!ensureAIConfig()) {
+      setNeedsConfig(true);
+      setLoading(false);
+      return;
+    }
+    setNeedsConfig(false);
+    setLoading(true);
+    try {
+      const fp = localStorage.getItem('jade_fingerprint');
+      const response = await fetch(`/api/interview/${id}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(fp ? { 'x-fingerprint': fp } : {}),
+          ...getAIHeaders(),
+        },
+        body: JSON.stringify({ locale: document.documentElement.lang || 'zh' }),
+      });
+      if (!response.ok) throw new Error('Failed to generate report');
+      setReport(await response.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, ensureAIConfig]);
 
   useEffect(() => {
-    if (!hydrated) return;
-
+    if (!isHydrated) return;
     const fp = localStorage.getItem('jade_fingerprint');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(fp ? { 'x-fingerprint': fp } : {}),
-      ...getAIHeaders(),
-    };
-
-    fetch(`/api/interview/${id}`, { headers })
-      .then((r) => r.json())
-      .then(({ session: s, report: r }) => {
-        setSession(s);
-        if (r) {
-          setReport(r);
+    // 已有报告只读历史数据，无需 AI 配置；只有缺少报告时才检查并生成。
+    fetch(`/api/interview/${id}`, {
+      headers: fp ? { 'x-fingerprint': fp } : {},
+    })
+      .then((response) => response.json())
+      .then(({ session: savedSession, report: savedReport }) => {
+        setSession(savedSession);
+        if (savedReport) {
+          setReport(savedReport);
           setLoading(false);
         } else {
-          fetch(`/api/interview/${id}/report`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ locale: document.documentElement.lang || 'zh' }),
-          })
-            .then((res) => res.json())
-            .then((data) => setReport(data))
-            .catch(console.error)
-            .finally(() => setLoading(false));
+          void generateReport();
         }
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-  }, [id, hydrated]);
+  }, [id, isHydrated, generateReport]);
 
   if (loading) {
     return (
@@ -59,7 +80,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }
 
   if (!report || !session) {
-    return <div className="py-20 text-center text-zinc-500">Failed to load report</div>;
+    return (
+      <div className="space-y-4 py-20 text-center text-zinc-500">
+        <p>{needsConfig ? t('required') : 'Failed to load report'}</p>
+        {session && <Button onClick={() => void generateReport()} className="cursor-pointer">{t('retry')}</Button>}
+      </div>
+    );
   }
 
   return <InterviewReportView report={report} session={session} />;

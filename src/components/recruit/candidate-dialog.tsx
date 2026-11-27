@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFingerprint } from '@/hooks/use-fingerprint';
-import { getAIHeaders, hasCompleteAIConfig, useSettingsStore } from '@/stores/settings-store';
+import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/lib/utils';
 import {
@@ -56,11 +57,8 @@ export function CandidateDialog({
   const t = useTranslations('recruit');
   const router = useRouter();
   const { fingerprint } = useFingerprint();
-  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
-  const aiModel = useSettingsStore((state) => state.aiModel);
-  const settingsHydrated = useSettingsStore((state) => state._hydrated);
-  const activeModal = useUIStore((state) => state.activeModal);
-  const hasAIConfig = hasCompleteAIConfig({ aiApiKey, aiModel });
+  const { isHydrated: settingsHydrated, ensureAIConfig } = useAIConfig();
+  const openAISettingsModal = useUIStore((state) => state.openAISettings);
   const [progress, setProgress] = useState<CandidateSetupProgress>({
     candidateId: candidate?.id ?? null,
     resumeSaved: false,
@@ -84,14 +82,23 @@ export function CandidateDialog({
   }, [open, candidate]);
 
   const hasResume = progress.resumeSaved || Boolean(file) || Boolean(text.trim());
-  const canSubmit = settingsHydrated && hasAIConfig && hasResume && running === null;
+  const canSubmit = settingsHydrated && hasResume && running === null;
   const resumeLocked = progress.resumeSaved;
 
   const headers = (): Record<string, string> =>
     fingerprint ? { 'x-fingerprint': fingerprint } : {};
 
 
+  const openAISettings = () => {
+    onOpenChange(false);
+    openAISettingsModal();
+  };
+
   async function handleSubmit() {
+    if (!ensureAIConfig()) {
+      onOpenChange(false);
+      return;
+    }
     setFailedAt(null);
 
     if (candidate?.id && name.trim() && name.trim() !== candidate.name) {
@@ -172,7 +179,7 @@ export function CandidateDialog({
   }
 
   return (
-    <Dialog open={open && activeModal !== 'settings'} onOpenChange={(o) => running === null && activeModal !== 'settings' && onOpenChange(o)}>
+    <Dialog open={open} onOpenChange={(o) => running === null && onOpenChange(o)}>
       <DialogContent
         className="sm:max-w-lg"
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -190,6 +197,7 @@ export function CandidateDialog({
             <ResumeFileUpload
               file={file}
               disabled={running !== null || resumeLocked}
+              onConfigureAI={openAISettings}
               onFileChange={(selectedFile) => {
                 setFile(selectedFile);
                 if (selectedFile) setText('');

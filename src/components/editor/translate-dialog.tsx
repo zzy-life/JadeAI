@@ -16,6 +16,7 @@ import { useResumeStore } from '@/stores/resume-store';
 import { LanguageSelect } from '@/components/ui/language-select';
 import { Languages, Loader2, CheckCircle2, AlertCircle, FileEdit, FilePlus2 } from 'lucide-react';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { cn } from '@/lib/utils';
 
 interface TranslateDialogProps {
@@ -63,6 +64,7 @@ async function readNDJSON(
 
 export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialogProps) {
   const t = useTranslations('translate');
+  const { ensureAIConfig } = useAIConfig();
   const router = useRouter();
   const currentResume = useResumeStore((s) => s.currentResume);
 
@@ -77,7 +79,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
   const [failedCount, setFailedCount] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Reset state when dialog opens
+  // 每次主动打开时初始化；配置引导关闭本弹窗，不自动恢复。
   useEffect(() => {
     if (open) {
       setState('idle');
@@ -94,6 +96,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
   }, [open]);
 
   const handleTranslate = useCallback(async () => {
+    if (!ensureAIConfig()) return;
     setState('translating');
     setErrorMessage('');
     setProgress({ completed: 0, total: 0 });
@@ -179,7 +182,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
       setState('error');
       setErrorMessage(err.message || t('error'));
     }
-  }, [resumeId, targetLanguage, mode, onOpenChange, t, router]);
+  }, [resumeId, targetLanguage, mode, onOpenChange, t, router, ensureAIConfig]);
 
   const progressPercent = progress.total > 0
     ? Math.round((progress.completed / progress.total) * 100)

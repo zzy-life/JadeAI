@@ -48,7 +48,7 @@
       "creating": "正在创建…",
       "createFailed": "创建失败，请重试。已填写的内容会保留。",
       "fileStyleHint": "识别后重新排版，不保证还原原文件样式。",
-      "aiRequired": "聊天制作需要先配置 API Key 和模型，配置后将返回这里，已有对话和输入会保留。"
+      "aiRequired": "聊天制作需要先配置 API Key 和模型，配置完成后请重新点击聊天制作。"
     },
     "resumeCount": "共 {count} 份简历",
     "lastEdited": "最后编辑于 {date}",
@@ -279,10 +279,17 @@
     "loadMore": "加载更多",
     "loadingMore": "加载中...",
     "bubbleTooltip": "与 AI 助手对话",
-    "apiKeyMissing": "API Key 未配置",
-    "apiKeyMissingHint": "请先在设置中配置 AI 服务的 API Key，才能使用 AI 功能。",
-    "apiKeyMissingBubble": "API Key 未配置，请前往设置配置",
-    "goToSettings": "前往设置"
+    "apiKeyMissingBubble": "AI 配置未完成，请前往设置配置",
+    "goToSettings": "前往设置",
+    "config": {
+      "required": "请先完成 AI 配置",
+      "apiKeyMissing": "尚未配置 API Key，请在 AI 设置中填写后重试。",
+      "textModelMissing": "尚未配置文本模型，请在 AI 设置中选择或填写模型后重试。",
+      "imageModelMissing": "尚未配置图片模型，请在 AI 设置中填写图片生成模型后重试。",
+      "imageProviderUnsupported": "当前协议不支持图片生成，请在 AI 设置中切换为 OpenAI 或 Gemini 并配置图片模型。",
+      "loading": "正在加载 AI 配置，请稍后重试。",
+      "retry": "重试"
+    }
   },
   "pdf": {
     "exporting": "正在生成 PDF...",
@@ -930,6 +937,7 @@
       "inputPlaceholder": "输入你的回答...",
       "send": "发送",
       "nextRound": "进入下一轮",
+      "startRound": "开始本轮面试",
       "generating": "面试官正在思考...",
       "roundComplete": "本轮面试结束",
       "allComplete": "所有面试轮次已完成",

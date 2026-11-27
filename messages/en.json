@@ -48,7 +48,7 @@
       "creating": "Creating…",
       "createFailed": "Could not create the resume. Try again; your input has been kept.",
       "fileStyleHint": "Content is reformatted after extraction. The original file layout may not be preserved.",
-      "aiRequired": "Configure an API key and model to chat. You will return here after setup with your conversation and input intact."
+      "aiRequired": "Configure an API key and model first, then select Create through AI chat again."
     },
     "resumeCount": "{count} resumes",
     "lastEdited": "Last edited {date}",
@@ -279,10 +279,17 @@
     "loadMore": "Load more",
     "loadingMore": "Loading...",
     "bubbleTooltip": "Chat with AI Assistant",
-    "apiKeyMissing": "API Key Not Configured",
-    "apiKeyMissingHint": "Please configure your AI API Key in Settings before using AI features.",
-    "apiKeyMissingBubble": "API Key not configured. Go to Settings.",
-    "goToSettings": "Go to Settings"
+    "apiKeyMissingBubble": "AI configuration is incomplete. Go to Settings.",
+    "goToSettings": "Go to Settings",
+    "config": {
+      "required": "Complete your AI configuration first",
+      "apiKeyMissing": "No API key is configured. Add one in AI settings, then try again.",
+      "textModelMissing": "No text model is configured. Select or enter a model in AI settings, then try again.",
+      "imageModelMissing": "No image model is configured. Enter an image generation model in AI settings, then try again.",
+      "imageProviderUnsupported": "The current protocol does not support image generation. Switch to OpenAI or Gemini and configure an image model in AI settings.",
+      "loading": "Loading AI configuration. Please try again shortly.",
+      "retry": "Try again"
+    }
   },
   "pdf": {
     "exporting": "Generating PDF...",
@@ -930,6 +937,7 @@
       "inputPlaceholder": "Type your answer...",
       "send": "Send",
       "nextRound": "Next Round",
+      "startRound": "Start this round",
       "generating": "Interviewer is thinking...",
       "roundComplete": "This round is complete",
       "allComplete": "All interview rounds completed",

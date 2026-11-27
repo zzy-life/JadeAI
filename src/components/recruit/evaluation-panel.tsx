@@ -22,6 +22,7 @@ import {
 import { DimensionRadar } from './dimension-radar';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { cn } from '@/lib/utils';
 import { countAnswered } from '@/lib/recruit/answers';
 import type {
@@ -52,6 +53,7 @@ export function EvaluationPanel({
   onEvaluated,
 }: EvaluationPanelProps) {
   const t = useTranslations('recruit');
+  const { ensureAIConfig } = useAIConfig();
   const tc = useTranslations('common');
   const { fingerprint } = useFingerprint();
   const [transcript, setTranscript] = useState(candidate.transcript);
@@ -67,6 +69,7 @@ export function EvaluationPanel({
   const hasEvaluationInput = recordedCount > 0 || Boolean(transcript.trim());
 
   async function doGenerate() {
+    if (!ensureAIConfig()) return;
     setGenerating(true);
     try {
       // 先存记录再评价：接口从库里读 transcript，不从请求体读。
@@ -100,6 +103,7 @@ export function EvaluationPanel({
   }
 
   function handleGenerate() {
+    if (!ensureAIConfig()) return;
     if (evaluation) setRegenerateOpen(true);
     else doGenerate();
   }

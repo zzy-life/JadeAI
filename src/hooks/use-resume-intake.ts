@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import {
   resumeIntakeInputSchema, resumeIntakeOutputSchema,
   type ResumeBasicInfo, type ResumeIntakeMessage,
@@ -10,9 +11,10 @@ import {
 
 const EMPTY_BASIC_INFO: ResumeBasicInfo = { fullName: '', jobTitle: '' };
 
-// 状态由始终挂载的创建容器持有；AI 设置暂时替换弹窗时，不会卸载或丢失对话。
+// 对话状态由创建容器持有，不因请求失败而清空。
 export function useResumeIntake(language: string, enabled: boolean) {
   const t = useTranslations('generateResume');
+  const { ensureAIConfig } = useAIConfig();
   const [messages, setMessages] = useState<ResumeIntakeMessage[]>([]);
   const [basicInfo, setBasicInfo] = useState<ResumeBasicInfo>(EMPTY_BASIC_INFO);
   const [draft, setDraft] = useState('');
@@ -38,7 +40,7 @@ export function useResumeIntake(language: string, enabled: boolean) {
   };
 
   const requestReply = async (conversation: ResumeIntakeMessage[]) => {
-    if (!enabled || requestRef.current) return;
+    if (requestRef.current || !ensureAIConfig() || !enabled) return;
     const parsed = resumeIntakeInputSchema.safeParse({ messages: conversation, language });
     if (!parsed.success) {
       setError(t('conversationLimit'));

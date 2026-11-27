@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore, getAIHeaders } from '@/stores/settings-store';
 import { useAIChat } from '@/hooks/use-ai-chat';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { useMessagePagination } from '@/hooks/use-message-pagination';
 import { AIMessage } from './ai-message';
 import { AIInput } from './ai-input';
@@ -64,17 +65,18 @@ export function AIChatContent({ resumeId, hideTitle }: AIChatContentProps) {
   const settingsBaseURL = useSettingsStore((s) => s.aiBaseURL);
   const settingsApiKey = useSettingsStore((s) => s.aiApiKey);
   const hydrated = useSettingsStore((s) => s._hydrated);
+  const { ensureAIConfig } = useAIConfig();
 
   // Sync selectedModel when settings hydrate or user changes default model
   useEffect(() => {
-    if (hydrated && settingsModel) {
-      setSelectedModel(settingsModel);
+    if (hydrated) {
+      setSelectedModel(settingsModel || undefined);
     }
   }, [hydrated, settingsModel]);
 
   // Fetch models from API — re-fetch when provider/key/baseURL/model changes
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !settingsApiKey.trim()) return;
     fetch('/api/ai/models', { headers: getAIHeaders() })
       .then((res) => res.json())
       .then((data: { models: { id: string }[] }) => {
@@ -187,7 +189,7 @@ export function AIChatContent({ resumeId, hideTitle }: AIChatContentProps) {
     }
   }, [activeSessionId, sessions, loadInitial, createNewSession]);
 
-  const { messages: chatMessages, input, handleInputChange, handleSubmit: originalHandleSubmit, isLoading, status, error: chatError, sendMessage } = useAIChat({
+  const { messages: chatMessages, input, handleInputChange, handleSubmit: originalHandleSubmit, isLoading, status, error: chatError, sendMessage, setInput } = useAIChat({
     resumeId,
     sessionId: activeSessionId,
     initialMessages,
@@ -216,10 +218,16 @@ export function AIChatContent({ resumeId, hideTitle }: AIChatContentProps) {
   const setPendingAiMessage = useEditorStore((s) => s.setPendingAiMessage);
   useEffect(() => {
     if (pendingAiMessage && sessionsLoaded && activeSessionId) {
-      void sendMessage({ text: pendingAiMessage });
+      // 先转为输入草稿；配置检查失败时不丢消息，也不在配置后自动发送。
+      const text = pendingAiMessage;
       setPendingAiMessage(null);
+      if (!ensureAIConfig()) {
+        setInput(text);
+        return;
+      }
+      void sendMessage({ text });
     }
-  }, [pendingAiMessage, sessionsLoaded, activeSessionId, sendMessage, setPendingAiMessage]);
+  }, [pendingAiMessage, sessionsLoaded, activeSessionId, sendMessage, setPendingAiMessage, ensureAIConfig, setInput]);
 
   // Merge historical (paginated older) + chat (current session) messages, dedup by id
   const displayMessages = useMemo(() => {
@@ -231,6 +239,10 @@ export function AIChatContent({ resumeId, hideTitle }: AIChatContentProps) {
 
   // Wrap handleSubmit to update session title on first message
   const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    if (input.trim() && !ensureAIConfig()) {
+      e.preventDefault();
+      return;
+    }
     const activeSession = sessions.find((s) => s.id === activeSessionId);
     if (activeSession && activeSession.title === '新对话' && input.trim()) {
       const newTitle = input.trim().slice(0, 50);
@@ -239,7 +251,7 @@ export function AIChatContent({ resumeId, hideTitle }: AIChatContentProps) {
       );
     }
     originalHandleSubmit(e);
-  }, [sessions, activeSessionId, input, originalHandleSubmit]);
+  }, [sessions, activeSessionId, input, originalHandleSubmit, ensureAIConfig]);
 
   // Smart auto-scroll: only scroll to bottom when user is near bottom
   useEffect(() => {

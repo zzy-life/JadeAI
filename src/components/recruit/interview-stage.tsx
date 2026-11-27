@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useFingerprint } from '@/hooks/use-fingerprint';
 import { getAIHeaders } from '@/stores/settings-store';
+import { useAIConfig } from '@/hooks/use-ai-config';
 import { dimensionColor } from '@/lib/recruit/dimension-colors';
 import { countAnswered, countSkipped } from '@/lib/recruit/answers';
 import { markQuestionSkipped, setQuestionAnswer } from '@/lib/recruit/questions';
@@ -65,6 +66,7 @@ export function InterviewStage({
   readOnly?: boolean;
 }) {
   const t = useTranslations('recruit');
+  const { ensureAIConfig, isSettingsOpen } = useAIConfig();
   const tc = useTranslations('common');
   const router = useRouter();
   const { fingerprint, isLoading: fpLoading } = useFingerprint();
@@ -219,6 +221,7 @@ export function InterviewStage({
   }, [flush, router, jobId, candidateId, readOnly]);
 
   async function doRegenerate() {
+    if (!ensureAIConfig()) return;
     setRegenerating(true);
     try {
       const res = await fetch(`/api/recruit/candidates/${candidateId}/questions`, {
@@ -249,7 +252,9 @@ export function InterviewStage({
 
   // 面试中手在键盘上，不该为了下一题去找鼠标
   useEffect(() => {
+    if (isSettingsOpen) return;
     function onKey(e: KeyboardEvent) {
+      if (e.defaultPrevented) return;
       const meta = e.metaKey || e.ctrlKey;
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -268,7 +273,7 @@ export function InterviewStage({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [index, isLast, goTo, exit, finish]);
+  }, [index, isLast, goTo, exit, finish, isSettingsOpen]);
 
   useEffect(
     () => () => {
