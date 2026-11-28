@@ -114,10 +114,8 @@ export function JobFormDialog({ open, onOpenChange, job, onSaved }: JobFormDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* 必须带 sm: 前缀：DialogContent 基类里的 sm:max-w-lg 是个 variant，
-          tailwind-merge 不会拿无前缀的 max-w-* 去覆盖它，写 max-w-2xl 是无效的 */}
       <DialogContent
-        className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-4xl"
+        size="lg"
         // Radix 打开时会聚焦第一个可聚焦元素，且对 input 会连带 select() 全选。
         // 编辑岗位时那就是「岗位名称」，一进来整个标题反白，手一抖就没了。
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -126,7 +124,7 @@ export function JobFormDialog({ open, onOpenChange, job, onSaved }: JobFormDialo
           <DialogTitle>{job ? t('editJob') : t('createJob')}</DialogTitle>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-auto space-y-5 overflow-y-auto overscroll-contain pr-1">
           <div className="space-y-2">
             <Label htmlFor="job-title">{t('jobTitle')}</Label>
             <Input

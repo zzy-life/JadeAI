@@ -53,6 +53,9 @@
 }
 
 :root {
+  --dialog-width-default: 640px;
+  --dialog-width-lg: 896px;
+  --dialog-max-height: min(85dvh, 800px);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

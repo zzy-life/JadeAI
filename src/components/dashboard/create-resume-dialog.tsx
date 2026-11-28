@@ -247,8 +247,9 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) leave('close'); }}>
       <DialogContent
+        size="lg"
         showCloseButton={!isBusy}
-        className={cn('flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl', step === 'ai' && 'h-[min(760px,calc(100dvh-2rem))]')}
+        className="gap-0 p-0"
         onEscapeKeyDown={(event) => { if (requestInProgressRef.current) event.preventDefault(); }}
         onInteractOutside={(event) => { if (requestInProgressRef.current) event.preventDefault(); }}
       >
@@ -275,7 +276,7 @@ export function CreateResumeDialog({ open, onClose, onCreate, onCreated }: Creat
           </>
         )}
 
-        <div className={cn('min-h-0 flex-1 overflow-y-auto px-6 pb-5', step === 'ai' && 'hidden')}>
+        <div className={cn('min-h-0 flex-auto overflow-y-auto overscroll-contain px-6 pb-5', step === 'ai' && 'hidden')}>
           {step === 'choose' && (
             <div className="space-y-5">
               {METHOD_GROUPS.map((group) => (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -165,7 +166,7 @@ export function ExportDialog({ open, onOpenChange, resumeId }: ExportDialogProps
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !isLoading) onOpenChange(false); }}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5 text-brand" />
@@ -174,7 +175,7 @@ export function ExportDialog({ open, onOpenChange, resumeId }: ExportDialogProps
           <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-5">
+        <DialogBody className="px-6 py-5">
           {state === 'idle' && (
             <TooltipProvider>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -257,7 +258,7 @@ export function ExportDialog({ open, onOpenChange, resumeId }: ExportDialogProps
               )}
             </div>
           )}
-        </div>
+        </DialogBody>
 
         <DialogFooter className="border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
           {(state === 'idle' || state === 'error') && (

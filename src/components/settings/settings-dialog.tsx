@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { Settings, Cpu, Paintbrush, PenTool, Eye, EyeOff, Sun, Moon, Monitor, ExternalLink, KeyRound, Gift, MessageCircle } from 'lucide-react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -124,7 +125,7 @@ export function SettingsDialog() {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className="sm:max-w-[540px] p-0 gap-0">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-zinc-500" />
@@ -132,8 +133,8 @@ export function SettingsDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={settingsTab} onValueChange={setSettingsTab} className="mt-4">
-          <div className="px-6">
+        <Tabs value={settingsTab} onValueChange={setSettingsTab} className="mt-4 min-h-0 flex-auto gap-0">
+          <div className="shrink-0 px-6">
             <TabsList className="w-full">
               <TabsTrigger value="ai" className="flex-1 gap-1.5 cursor-pointer">
                 <Cpu className="h-3.5 w-3.5" />
@@ -151,7 +152,7 @@ export function SettingsDialog() {
           </div>
 
           {/* AI Configuration Tab */}
-          <TabsContent value="ai" className="max-h-[calc(100vh-10rem)] overflow-y-auto px-6 pb-6 pt-4 space-y-5">
+          <TabsContent value="ai" className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-6 pb-6 pt-4 space-y-5">
             {/* Provider */}
             <div className="space-y-2">
               <Label>{t('ai.provider')}</Label>
@@ -300,7 +301,7 @@ export function SettingsDialog() {
           </TabsContent>
 
           {/* Appearance Tab */}
-          <TabsContent value="appearance" className="px-6 pb-6 pt-4 space-y-5">
+          <TabsContent value="appearance" className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-6 pb-6 pt-4 space-y-5">
             {/* Theme */}
             <div className="space-y-3">
               <Label>{t('appearance.theme')}</Label>
@@ -348,7 +349,7 @@ export function SettingsDialog() {
           </TabsContent>
 
           {/* Editor Tab */}
-          <TabsContent value="editor" className="px-6 pb-6 pt-4 space-y-5">
+          <TabsContent value="editor" className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-6 pb-6 pt-4 space-y-5">
             {/* Auto Save */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -428,8 +429,8 @@ export function SettingsDialog() {
       </Dialog>
 
       <Dialog open={freeTrialOpen} onOpenChange={setFreeTrialOpen}>
-        <DialogContent className="sm:max-w-[400px] overflow-hidden p-0 gap-0">
-          <div className="bg-gradient-to-b from-emerald-50 to-white px-6 pb-6 pt-7 dark:from-emerald-950/50 dark:to-zinc-950">
+        <DialogContent className="p-0 gap-0">
+          <DialogBody className="bg-gradient-to-b from-emerald-50 to-white px-6 pb-6 pt-7 dark:from-emerald-950/50 dark:to-zinc-950">
             <DialogHeader className="items-center text-center sm:text-center">
               <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
                 <MessageCircle className="h-5 w-5" />
@@ -458,7 +459,7 @@ export function SettingsDialog() {
                 {t('ai.freeTrialKeyword')}
               </p>
             </div>
-          </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>

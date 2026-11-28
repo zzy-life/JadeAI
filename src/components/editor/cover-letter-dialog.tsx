@@ -5,14 +5,15 @@ import { useTranslations } from 'next-intl';
 import { Loader2, AlertTriangle, Copy, Check, Download, RotateCcw, FileText } from 'lucide-react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { LanguageSelect } from '@/components/ui/language-select';
 import { cn } from '@/lib/utils';
 import { getAIHeaders } from '@/stores/settings-store';
@@ -121,7 +122,7 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-brand" />
@@ -132,58 +133,59 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
 
         {!result ? (
           /* ---------- Input State ---------- */
-          <div className="px-6 py-4 space-y-4">
-            {/* Job Description */}
-            <Textarea
-              placeholder={t('jdPlaceholder')}
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              rows={6}
-              className="h-[160px] max-h-[160px] overflow-y-auto resize-none text-sm"
-              disabled={isGenerating}
-            />
+          <>
+            <DialogBody className="px-6 py-4 space-y-4">
+              {/* Job Description */}
+              <Textarea
+                placeholder={t('jdPlaceholder')}
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                rows={6}
+                className="h-[160px] max-h-[160px] overflow-y-auto resize-none text-sm"
+                disabled={isGenerating}
+              />
 
-            {/* Tone Selector */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('tone')}
-              </label>
-              <div className="flex gap-2">
-                {(['formal', 'friendly', 'confident'] as Tone[]).map((t_tone) => (
-                  <button
-                    key={t_tone}
-                    type="button"
-                    className={cn(
-                      'flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-                      tone === t_tone
-                        ? 'border-brand bg-brand-muted text-brand dark:bg-brand-muted dark:text-brand dark:border-brand'
-                        : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600'
-                    )}
-                    onClick={() => setTone(t_tone)}
-                    disabled={isGenerating}
-                  >
-                    {t(`tone${t_tone.charAt(0).toUpperCase() + t_tone.slice(1)}` as any)}
-                  </button>
-                ))}
+              {/* Tone Selector */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {t('tone')}
+                </label>
+                <div className="flex gap-2">
+                  {(['formal', 'friendly', 'confident'] as Tone[]).map((t_tone) => (
+                    <button
+                      key={t_tone}
+                      type="button"
+                      className={cn(
+                        'flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                        tone === t_tone
+                          ? 'border-brand bg-brand-muted text-brand dark:bg-brand-muted dark:text-brand dark:border-brand'
+                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600'
+                      )}
+                      onClick={() => setTone(t_tone)}
+                      disabled={isGenerating}
+                    >
+                      {t(`tone${t_tone.charAt(0).toUpperCase() + t_tone.slice(1)}` as any)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Language */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('language')}
-              </label>
-              <LanguageSelect value={language} onValueChange={setLanguage} disabled={isGenerating} />
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                {error}
+              {/* Language */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {t('language')}
+                </label>
+                <LanguageSelect value={language} onValueChange={setLanguage} disabled={isGenerating} />
               </div>
-            )}
 
-            <div className="flex justify-end gap-2">
+              {error && (
+                <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+            </DialogBody>
+            <DialogFooter className="border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
               <Button
                 variant="outline"
                 onClick={handleClose}
@@ -205,12 +207,12 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
                   t('generate')
                 )}
               </Button>
-            </div>
-          </div>
+            </DialogFooter>
+          </>
         ) : (
           /* ---------- Result State ---------- */
           <>
-            <ScrollArea className="max-h-[60vh]">
+            <DialogBody>
               <div className="px-6 py-4 space-y-4">
                 {/* Title */}
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
@@ -223,10 +225,10 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
                   </p>
                 </div>
               </div>
-            </ScrollArea>
+            </DialogBody>
 
             {/* Footer */}
-            <div className="flex justify-between gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+            <div className="flex shrink-0 flex-wrap justify-between gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
               <Button
                 variant="outline"
                 onClick={handleGenerateAgain}
@@ -235,7 +237,7 @@ export function CoverLetterDialog({ open, onOpenChange, resumeId }: CoverLetterD
                 <RotateCcw className="h-3.5 w-3.5" />
                 {t('generateAgain')}
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   onClick={handleCopy}

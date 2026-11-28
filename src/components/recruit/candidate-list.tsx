@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -344,15 +345,17 @@ export function CandidateList({ jobId }: { jobId: string }) {
           <DialogHeader>
             <DialogTitle>{tc('rename')}</DialogTitle>
           </DialogHeader>
-          <Input
-            value={renaming?.name ?? ''}
-            onChange={(e) => setRenaming((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
-            placeholder={t('candidates.namePlaceholder')}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRenameCandidate();
-            }}
-          />
+          <DialogBody className="-m-1 p-1">
+            <Input
+              value={renaming?.name ?? ''}
+              onChange={(e) => setRenaming((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
+              placeholder={t('candidates.namePlaceholder')}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRenameCandidate();
+              }}
+            />
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenaming(null)} className="cursor-pointer">
               {t('cancel')}

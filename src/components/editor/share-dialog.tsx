@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -218,7 +219,7 @@ export function ShareDialog({ open, onOpenChange, resumeId }: ShareDialogProps) 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+        <DialogContent className="p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-4">
             <DialogTitle className="flex items-center gap-2.5 text-base">
               <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-brand-muted dark:bg-brand-muted">
@@ -229,11 +230,11 @@ export function ShareDialog({ open, onOpenChange, resumeId }: ShareDialogProps) 
             <DialogDescription className="text-sm">{t('description')}</DialogDescription>
           </DialogHeader>
 
-          <div className="px-6 pb-6 space-y-5">
+          <DialogBody className="px-6 pb-6 space-y-5">
             {/* ── Create new share ── */}
             <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <div className="flex items-end gap-3">
-                <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="w-full min-w-0 space-y-1.5 sm:flex-1">
                   <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                     {t('label')}
                   </label>
@@ -305,7 +306,7 @@ export function ShareDialog({ open, onOpenChange, resumeId }: ShareDialogProps) 
 
             {/* ── Share list ── */}
             {!loading && shares.length > 0 && (
-              <div className="space-y-3 max-h-[21rem] overflow-y-auto pr-0.5 -mr-0.5">
+              <div className="space-y-3">
                 {shares.map((share) => (
                   <div
                     key={share.id}
@@ -412,10 +413,10 @@ export function ShareDialog({ open, onOpenChange, resumeId }: ShareDialogProps) 
                 ))}
               </div>
             )}
-          </div>
+          </DialogBody>
 
           {/* Footer */}
-          <div className="border-t border-zinc-100 px-6 py-3.5 dark:border-zinc-800 flex justify-between items-center">
+          <div className="shrink-0 border-t border-zinc-100 px-6 py-3.5 dark:border-zinc-800 flex justify-between items-center">
             {!loading && shares.length > 0 && (
               <p className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">
                 {shares.length} {shares.length === 1 ? 'link' : 'links'}

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -195,7 +196,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && state !== 'translating') onOpenChange(false); }}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Languages className="h-5 w-5 text-brand" />
@@ -204,7 +205,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
           <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-5 space-y-4">
+        <DialogBody className="px-6 py-5 space-y-4">
           {/* Language Selector */}
           {state === 'idle' && (
             <>
@@ -298,7 +299,7 @@ export function TranslateDialog({ open, onOpenChange, resumeId }: TranslateDialo
               </p>
             </div>
           )}
-        </div>
+        </DialogBody>
 
         {/* Footer */}
         <DialogFooter className="border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">

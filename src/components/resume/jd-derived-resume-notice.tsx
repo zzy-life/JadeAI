@@ -6,6 +6,7 @@ import { Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -55,22 +56,24 @@ export function JdDerivedResumeNotice({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent onClick={(event) => event.stopPropagation()} className="sm:max-w-xl">
+        <DialogContent onClick={(event) => event.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>{t('title')}</DialogTitle>
             <DialogDescription>{t('description')}</DialogDescription>
           </DialogHeader>
-          {sourceTitle && (
-            <div className="text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400">{t('sourceLabel')}</span>
-              <span className="font-medium text-zinc-900 dark:text-zinc-100">{sourceTitle}</span>
+          <DialogBody className="space-y-4">
+            {sourceTitle && (
+              <div className="break-words text-sm">
+                <span className="text-zinc-500 dark:text-zinc-400">{t('sourceLabel')}</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{sourceTitle}</span>
+              </div>
+            )}
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                {jobDescription}
+              </p>
             </div>
-          )}
-          <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-              {jobDescription}
-            </p>
-          </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>

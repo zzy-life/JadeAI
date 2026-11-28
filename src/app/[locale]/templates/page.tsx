@@ -334,20 +334,20 @@ export default function TemplatesPage() {
           if (!open) setPreviewTemplate(null);
         }}
       >
-        <DialogContent className="flex h-[90vh] w-[90vw] max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[900px]">
+        <DialogContent size="lg" className="gap-0 p-0">
           <DialogHeader className="shrink-0 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
             <DialogTitle>
               {previewTemplate && t(templateLabelKeys[previewTemplate])}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="min-h-0 flex-auto overflow-y-auto overscroll-contain">
             {previewTemplate && (
               <div className="mx-auto w-full max-w-[794px] p-6">
                 <ResumePreview resume={buildMockResume(previewTemplate)} />
               </div>
             )}
           </div>
-          <div className="sticky bottom-0 border-t bg-white p-3 dark:bg-background sm:hidden">
+          <div className="shrink-0 border-t bg-white p-3 dark:bg-background sm:hidden">
             <Button
               className="w-full cursor-pointer bg-brand hover:bg-brand-hover"
               disabled={creatingTemplate === previewTemplate}

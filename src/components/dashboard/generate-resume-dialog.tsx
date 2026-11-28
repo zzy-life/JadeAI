@@ -36,8 +36,8 @@ export function ResumeIntakeChat({ intake, generating, generationError }: Resume
   }, [messages, isReplying, error, generationError]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* 收集状态保留在滚动区之外，手机长对话也能随时看到制作门槛。 */}
+    <div className="relative flex min-h-0 flex-auto flex-col [@media(max-height:600px)]:block [@media(max-height:600px)]:overflow-y-auto [@media(max-height:600px)]:overscroll-contain">
+      {/* 正常高度只滚动消息；矮窗口整段滚动，避免状态栏和输入栏挤压后重叠。 */}
       <section aria-label={t('collectedInfo')} className="shrink-0 border-y border-zinc-100 bg-brand-muted/20 px-6 py-3 dark:border-zinc-800">
         <dl className="flex min-w-0 flex-wrap gap-x-5 gap-y-2 text-sm">
           {(['fullName', 'jobTitle'] as const).map((field) => (
@@ -53,7 +53,7 @@ export function ResumeIntakeChat({ intake, generating, generationError }: Resume
         <p id="resume-intake-status" role="status" className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">{status}</p>
       </section>
 
-      <div role="log" aria-label={t('conversation')} aria-busy={isReplying} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+      <div role="log" aria-label={t('conversation')} aria-busy={isReplying} className="min-h-0 flex-auto space-y-4 overflow-y-auto overscroll-contain px-6 py-4 [@media(max-height:600px)]:overflow-visible">
         <div className="max-w-[92%] rounded-xl rounded-tl-sm bg-zinc-100 px-4 py-3 text-sm leading-relaxed dark:bg-zinc-800">
           <p className="mb-1 text-xs font-medium text-brand">{t('assistant')}</p>
           <p>{t('welcome')}</p>

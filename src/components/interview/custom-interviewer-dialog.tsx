@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -62,7 +64,7 @@ export function CustomInterviewerDialog({ onAdd, trigger }: CustomInterviewerDia
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           <div className="space-y-1">
             <Label>{t('name')}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} />
@@ -87,10 +89,12 @@ export function CustomInterviewerDialog({ onAdd, trigger }: CustomInterviewerDia
             <Label>{t('personality')}</Label>
             <Input value={personality} onChange={(e) => setPersonality(e.target.value)} placeholder={t('personalityPlaceholder')} />
           </div>
+        </DialogBody>
+        <DialogFooter>
           <Button onClick={handleAdd} disabled={!name.trim() || !focusAreas.trim()} className="w-full bg-brand hover:bg-brand-hover">
             {t('add')}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

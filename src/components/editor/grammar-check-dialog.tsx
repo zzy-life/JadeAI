@@ -8,7 +8,9 @@ import {
 } from 'lucide-react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -349,7 +351,7 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
   return (
     <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <SpellCheck className="h-5 w-5 text-brand" />
@@ -358,8 +360,8 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
           <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0 min-h-0 flex-1">
-          <div className="px-6 pt-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0 min-h-0 flex-auto">
+          <div className="shrink-0 px-6 pt-3">
             <TabsList className="w-full">
               <TabsTrigger value="new" className="flex-1 cursor-pointer">
                 {t('newCheck')}
@@ -376,35 +378,36 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
           </div>
 
           {/* ── New Check Tab ── */}
-          <TabsContent value="new" className="flex flex-col min-h-0">
+          <TabsContent value="new" className="flex min-h-0 flex-auto flex-col">
             {!result ? (
-              <div className="px-6 py-4 space-y-4">
-                {!isChecking && !error && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <SpellCheck className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {t('description')}
-                    </p>
-                  </div>
-                )}
+              <>
+                <DialogBody className="px-6 py-4 space-y-4">
+                  {!isChecking && !error && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <SpellCheck className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {t('description')}
+                      </p>
+                    </div>
+                  )}
 
-                {isChecking && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-brand mb-3" />
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      {t('checking')}
-                    </p>
-                  </div>
-                )}
+                  {isChecking && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-brand mb-3" />
+                      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        {t('checking')}
+                      </p>
+                    </div>
+                  )}
 
-                {error && (
-                  <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2">
+                  {error && (
+                    <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      {error}
+                    </div>
+                  )}
+                </DialogBody>
+                <DialogFooter className="border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
@@ -422,14 +425,14 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
                       t('check')
                     )}
                   </Button>
-                </div>
-              </div>
+                </DialogFooter>
+              </>
             ) : (
               <>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <GrammarCheckResultView result={result} t={t} />
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
@@ -449,10 +452,10 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
           </TabsContent>
 
           {/* ── History Tab ── */}
-          <TabsContent value="history" className="flex flex-col min-h-0">
+          <TabsContent value="history" className="flex min-h-0 flex-auto flex-col">
             {historyDetail ? (
               <>
-                <div className="px-6 pt-2">
+                <div className="shrink-0 px-6 pt-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -463,28 +466,32 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
                     {t('historyTab')}
                   </Button>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <GrammarCheckResultView result={historyDetail} t={t} />
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
                 </div>
               </>
             ) : historyLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-brand mb-2" />
-                <p className="text-sm text-zinc-500">{t('loadingHistory')}</p>
-              </div>
+              <DialogBody>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand mb-2" />
+                  <p className="text-sm text-zinc-500">{t('loadingHistory')}</p>
+                </div>
+              </DialogBody>
             ) : history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-6">
-                <SpellCheck className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-3" />
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noHistory')}</p>
-              </div>
+              <DialogBody>
+                <div className="flex flex-col items-center justify-center py-12 px-6">
+                  <SpellCheck className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-3" />
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noHistory')}</p>
+                </div>
+              </DialogBody>
             ) : (
               <>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <div className="px-6 py-4 space-y-2.5">
                     {history.map((item, idx) => {
                       const prevScore = idx < history.length - 1 ? history[idx + 1].score : undefined;
@@ -539,7 +546,7 @@ export function GrammarCheckDialog({ open, onOpenChange, resumeId }: GrammarChec
                     })}
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>

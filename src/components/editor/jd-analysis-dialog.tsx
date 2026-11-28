@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -122,67 +124,69 @@ function ScoreCircle({ score, label, size = 'lg' }: { score: number; label: stri
 
 function JdOptimizeProgress({ t }: { t: any }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-10">
-      <div className="relative mb-7 h-48 w-36 overflow-hidden rounded-xl border border-brand/20 bg-white shadow-[0_24px_70px_-28px_rgba(59,130,246,0.55)] dark:bg-zinc-900">
-        <div className="space-y-3 p-5">
-          <div className="h-2 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-          <div className="h-1.5 w-24 rounded-full bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-5 h-1.5 w-full rounded-full bg-brand/20" />
-          <div className="h-1.5 w-5/6 rounded-full bg-zinc-100 dark:bg-zinc-800" />
-          <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-4 h-1.5 w-3/4 rounded-full bg-brand/20" />
-          <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
-          <div className="h-1.5 w-4/5 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+    <DialogBody>
+      <div className="flex flex-col items-center px-6 py-10">
+        <div className="relative mb-7 h-48 w-36 overflow-hidden rounded-xl border border-brand/20 bg-white shadow-[0_24px_70px_-28px_rgba(59,130,246,0.55)] dark:bg-zinc-900">
+          <div className="space-y-3 p-5">
+            <div className="h-2 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+            <div className="h-1.5 w-24 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+            <div className="mt-5 h-1.5 w-full rounded-full bg-brand/20" />
+            <div className="h-1.5 w-5/6 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+            <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
+            <div className="mt-4 h-1.5 w-3/4 rounded-full bg-brand/20" />
+            <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
+            <div className="h-1.5 w-4/5 rounded-full bg-zinc-100 dark:bg-zinc-800" />
+          </div>
+          <div className="absolute inset-x-0 top-0 h-16 animate-[jd-scan_2.2s_ease-in-out_infinite] border-b border-brand/60 bg-gradient-to-b from-transparent via-brand/15 to-brand/30 motion-reduce:animate-none" />
+          <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30">
+            <Wand2 className="h-4 w-4 animate-pulse motion-reduce:animate-none" />
+          </div>
         </div>
-        <div className="absolute inset-x-0 top-0 h-16 animate-[jd-scan_2.2s_ease-in-out_infinite] border-b border-brand/60 bg-gradient-to-b from-transparent via-brand/15 to-brand/30 motion-reduce:animate-none" />
-        <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30">
-          <Wand2 className="h-4 w-4 animate-pulse motion-reduce:animate-none" />
+
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t('optimizingTitle')}</h3>
+        <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+          {t('optimizingDescription')}
+        </p>
+
+        <div className="mt-7 grid w-full max-w-lg grid-cols-3 gap-3">
+          {[
+            [FileText, 'optimizingStepAnalyze'],
+            [Target, 'optimizingStepTailor'],
+            [CheckCircle2, 'optimizingStepValidate'],
+          ].map(([Icon, key], index) => {
+            const StepIcon = Icon as typeof FileText;
+            return (
+              <div
+                key={key as string}
+                className="flex flex-col items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50/70 px-2 py-3 text-center dark:border-zinc-800 dark:bg-zinc-900/70"
+                style={{ animation: `pulse 1.8s ease-in-out ${index * 0.3}s infinite` }}
+              >
+                <StepIcon className="h-4 w-4 text-brand" />
+                <span className="text-xs text-zinc-600 dark:text-zinc-300">{t(key as string)}</span>
+              </div>
+            );
+          })}
         </div>
-      </div>
 
-      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t('optimizingTitle')}</h3>
-      <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-        {t('optimizingDescription')}
-      </p>
-
-      <div className="mt-7 grid w-full max-w-lg grid-cols-3 gap-3">
-        {[
-          [FileText, 'optimizingStepAnalyze'],
-          [Target, 'optimizingStepTailor'],
-          [CheckCircle2, 'optimizingStepValidate'],
-        ].map(([Icon, key], index) => {
-          const StepIcon = Icon as typeof FileText;
-          return (
-            <div
-              key={key as string}
-              className="flex flex-col items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50/70 px-2 py-3 text-center dark:border-zinc-800 dark:bg-zinc-900/70"
-              style={{ animation: `pulse 1.8s ease-in-out ${index * 0.3}s infinite` }}
-            >
-              <StepIcon className="h-4 w-4 text-brand" />
-              <span className="text-xs text-zinc-600 dark:text-zinc-300">{t(key as string)}</span>
-            </div>
-          );
-        })}
+        <div className="mt-6 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {t('mainResumeProtected')}
+        </div>
+        <style jsx>{`
+          @keyframes jd-scan {
+            0%, 100% { transform: translateY(-4rem); opacity: 0.35; }
+            50% { transform: translateY(12rem); opacity: 1; }
+          }
+        `}</style>
       </div>
-
-      <div className="mt-6 flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-        <ShieldCheck className="h-3.5 w-3.5" />
-        {t('mainResumeProtected')}
-      </div>
-      <style jsx>{`
-        @keyframes jd-scan {
-          0%, 100% { transform: translateY(-4rem); opacity: 0.35; }
-          50% { transform: translateY(12rem); opacity: 1; }
-        }
-      `}</style>
-    </div>
+    </DialogBody>
   );
 }
 
 function JdOptimizeResult({ result, t, onOpen }: { result: OptimizationResult; t: any; onOpen: () => void }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto px-6 py-7">
+    <div className="flex min-h-0 flex-auto flex-col">
+      <DialogBody className="px-6 py-7">
         <div className="mx-auto max-w-lg">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 className="h-6 w-6" />
@@ -213,8 +217,8 @@ function JdOptimizeResult({ result, t, onOpen }: { result: OptimizationResult; t
             {t('mainResumeProtected')}
           </div>
         </div>
-      </div>
-      <div className="flex justify-end border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+      </DialogBody>
+      <div className="flex shrink-0 flex-wrap justify-end border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
         <Button onClick={onOpen} className="cursor-pointer gap-1.5 bg-brand hover:bg-brand-hover">
           {t('openOptimizedResume')}
         </Button>
@@ -527,7 +531,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="p-0 gap-0">
         {!isOptimizing && !optimizationResult && (
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle>{t('title')}</DialogTitle>
@@ -548,8 +552,8 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
             }}
           />
         ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0 min-h-0 flex-1">
-          <div className="px-6 pt-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0 min-h-0 flex-auto">
+          <div className="shrink-0 px-6 pt-3">
             <TabsList className="w-full">
               <TabsTrigger value="new" className="flex-1 cursor-pointer">
                 {t('newAnalysis')}
@@ -566,27 +570,28 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
           </div>
 
           {/* ── New Analysis Tab ── */}
-          <TabsContent value="new" className="flex flex-col min-h-0">
+          <TabsContent value="new" className="flex min-h-0 flex-auto flex-col">
             {!result ? (
-              <div className="px-6 py-4 space-y-4">
-                <Textarea
-                  placeholder={t('placeholder')}
-                  value={jobDescription}
-                  onChange={(e) => setJobDescription(e.target.value)}
-                  maxLength={MAX_JOB_DESCRIPTION_LENGTH}
-                  rows={6}
-                  className="h-[200px] max-h-[200px] overflow-y-auto resize-none text-sm"
-                  disabled={isAnalyzing}
-                />
+              <>
+                <DialogBody className="px-6 py-4 space-y-4">
+                  <Textarea
+                    placeholder={t('placeholder')}
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    maxLength={MAX_JOB_DESCRIPTION_LENGTH}
+                    rows={6}
+                    className="h-[200px] max-h-[200px] overflow-y-auto resize-none text-sm"
+                    disabled={isAnalyzing}
+                  />
 
-                {error && (
-                  <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2">
+                  {error && (
+                    <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      {error}
+                    </div>
+                  )}
+                </DialogBody>
+                <DialogFooter className="border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
@@ -604,14 +609,14 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                       t('analyze')
                     )}
                   </Button>
-                </div>
-              </div>
+                </DialogFooter>
+              </>
             ) : (
               <>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <JdAnalysisResultView result={result} jobDescription={jobDescription} t={t} />
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
@@ -637,11 +642,11 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
           </TabsContent>
 
           {/* ── History Tab ── */}
-          <TabsContent value="history" className="flex flex-col min-h-0">
+          <TabsContent value="history" className="flex min-h-0 flex-auto flex-col">
             {historyDetail ? (
               /* Detail View */
               <>
-                <div className="px-6 pt-2">
+                <div className="shrink-0 px-6 pt-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -652,10 +657,10 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                     {t('historyTab')}
                   </Button>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <JdAnalysisResultView result={historyDetail} jobDescription={historyDetailJd} t={t} />
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>
@@ -674,20 +679,24 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                 </div>
               </>
             ) : historyLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-brand mb-2" />
-                <p className="text-sm text-zinc-500">{t('loadingHistory')}</p>
-              </div>
+              <DialogBody>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand mb-2" />
+                  <p className="text-sm text-zinc-500">{t('loadingHistory')}</p>
+                </div>
+              </DialogBody>
             ) : history.length === 0 ? (
               /* Empty State */
-              <div className="flex flex-col items-center justify-center py-12 px-6">
-                <FileSearch className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-3" />
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noHistory')}</p>
-              </div>
+              <DialogBody>
+                <div className="flex flex-col items-center justify-center py-12 px-6">
+                  <FileSearch className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-3" />
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('noHistory')}</p>
+                </div>
+              </DialogBody>
             ) : (
               /* History List */
               <>
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-auto min-h-0 overflow-y-auto overscroll-contain">
                   <div className="px-6 py-4 space-y-2.5">
                     {history.map((item, idx) => {
                       const prevScore = idx < history.length - 1 ? history[idx + 1].overallScore : undefined;
@@ -750,7 +759,7 @@ export function JdAnalysisDialog({ open, onOpenChange, resumeId }: JdAnalysisDia
                     })}
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
+                <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800">
                   <Button variant="outline" onClick={handleClose} className="cursor-pointer">
                     {t('close')}
                   </Button>

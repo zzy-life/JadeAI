@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useRouter } from '@/i18n/routing';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -181,7 +182,6 @@ export function CandidateDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => running === null && onOpenChange(o)}>
       <DialogContent
-        className="sm:max-w-lg"
         onOpenAutoFocus={(e) => e.preventDefault()}
         showCloseButton={running === null}
       >
@@ -191,7 +191,7 @@ export function CandidateDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           <div className="space-y-1.5">
             <Label>{t('addFlow.resumeLabel')}</Label>
             <ResumeFileUpload
@@ -253,7 +253,7 @@ export function CandidateDialog({
               })}
             </div>
           )}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button
